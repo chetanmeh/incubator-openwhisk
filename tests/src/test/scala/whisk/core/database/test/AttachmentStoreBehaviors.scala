@@ -25,7 +25,7 @@ import akka.util.{ByteString, ByteStringBuilder}
 import common.StreamLogging
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{FlatSpec, Matchers}
-import whisk.common.TransactionCounter
+import whisk.common.{TransactionCounter, TransactionId}
 import whisk.core.database.{AttachmentStore, NoDocumentException}
 import whisk.core.entity.DocInfo
 
@@ -38,10 +38,12 @@ trait AttachmentStoreBehaviors extends ScalaFutures with TransactionCounter with
 
   def store: AttachmentStore
 
-  behavior of "AttachmentStore"
+  def storeType: String
+
+  behavior of s"$storeType AttachmentStore"
 
   it should "add and read attachment" in {
-    implicit val tid = transid()
+    implicit val tid: TransactionId = transid()
     val bytes = randomBytes(4000)
 
     val info = DocInfo ! (newDocId, "1")
@@ -56,7 +58,7 @@ trait AttachmentStoreBehaviors extends ScalaFutures with TransactionCounter with
   }
 
   it should "add and then update attachment" in {
-    implicit val tid = transid()
+    implicit val tid: TransactionId = transid()
     val bytes = randomBytes(4000)
 
     val info = DocInfo ! (newDocId, "1")
@@ -76,7 +78,7 @@ trait AttachmentStoreBehaviors extends ScalaFutures with TransactionCounter with
   }
 
   it should "add and delete attachment" in {
-    implicit val tid = transid()
+    implicit val tid: TransactionId = transid()
     val bytes = randomBytes(4000)
 
     val info = DocInfo ! (newDocId, "1")
@@ -109,7 +111,7 @@ trait AttachmentStoreBehaviors extends ScalaFutures with TransactionCounter with
   }
 
   it should "throw NoDocumentException on reading non existing attachment" in {
-    implicit val tid = transid()
+    implicit val tid: TransactionId = transid()
 
     val info = DocInfo ! ("nonExistingAction", "1")
     val f = store.readAttachment(info, "code", byteStringSink)
@@ -118,7 +120,7 @@ trait AttachmentStoreBehaviors extends ScalaFutures with TransactionCounter with
   }
 
   it should "not write an attachment when there is error in Source" in {
-    implicit val tid = transid()
+    implicit val tid: TransactionId = transid()
 
     val info = DocInfo ! (newDocId, "1")
     val error = new Error("boom!")
@@ -143,7 +145,7 @@ trait AttachmentStoreBehaviors extends ScalaFutures with TransactionCounter with
 
   protected def newDocId: String = {
     counter = counter + 1
-    s"${prefix}_$counter"
+    s"attachmentTests_${prefix}_$counter"
   }
 
   private def randomBytes(size: Int): Array[Byte] = {
