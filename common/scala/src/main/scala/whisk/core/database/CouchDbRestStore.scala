@@ -52,6 +52,7 @@ class CouchDbRestStore[DocumentAbstraction <: DocumentSerializer](dbProtocol: St
                                                                   dbUsername: String,
                                                                   dbPassword: String,
                                                                   dbName: String,
+                                                                  attachmentStore: AttachmentStore,
                                                                   useBatching: Boolean = false)(
   implicit system: ActorSystem,
   val logging: Logging,
@@ -369,97 +370,14 @@ class CouchDbRestStore[DocumentAbstraction <: DocumentSerializer](dbProtocol: St
     doc: DocInfo,
     name: String,
     contentType: ContentType,
-    docStream: Source[ByteString, _])(implicit transid: TransactionId): Future[DocInfo] = {
-
-    val start = transid.started(
-      this,
-      LoggingMarkers.DATABASE_ATT_SAVE,
-      s"[ATT_PUT] '$dbName' uploading attachment '$name' of document '$doc'")
-
-    require(doc != null, "doc undefined")
-    require(doc.rev.rev != null, "doc revision must be specified")
-
-    val f = client.putAttachment(doc.id.id, doc.rev.rev, name, contentType, docStream).map { e =>
-      e match {
-        case Right(response) =>
-          transid
-            .finished(this, start, s"[ATT_PUT] '$dbName' completed uploading attachment '$name' of document '$doc'")
-          val id = response.fields("id").convertTo[String]
-          val rev = response.fields("rev").convertTo[String]
-          DocInfo ! (id, rev)
-
-        case Left(StatusCodes.NotFound) =>
-          transid
-            .finished(this, start, s"[ATT_PUT] '$dbName' uploading attachment '$name' of document '$doc'; not found")
-          throw NoDocumentException("Not found on 'readAttachment'.")
-
-        case Left(code) =>
-          transid.failed(
-            this,
-            start,
-            s"[ATT_PUT] '$dbName' failed to upload attachment '$name' of document '$doc'; http status '$code'")
-          throw new Exception("Unexpected http response code: " + code)
-      }
-    }
-
-    reportFailure(
-      f,
-      failure =>
-        transid.failed(
-          this,
-          start,
-          s"[ATT_PUT] '$dbName' internal error, name: '$name', doc: '$doc', failure: '${failure.getMessage}'",
-          ErrorLevel))
-  }
+    docStream: Source[ByteString, _])(implicit transid: TransactionId): Future[DocInfo] =
+    attachmentStore.attach(doc, name, contentType, docStream)
 
   override protected[core] def readAttachment[T](doc: DocInfo, name: String, sink: Sink[ByteString, Future[T]])(
-    implicit transid: TransactionId): Future[(ContentType, T)] = {
-
-    val start = transid.started(
-      this,
-      LoggingMarkers.DATABASE_ATT_GET,
-      s"[ATT_GET] '$dbName' finding attachment '$name' of document '$doc'")
-
-    require(doc != null, "doc undefined")
-    require(doc.rev.rev != null, "doc revision must be specified")
-
-    val f = client.getAttachment[T](doc.id.id, doc.rev.rev, name, sink)
-    val g = f.map { e =>
-      e match {
-        case Right((contentType, result)) =>
-          transid.finished(this, start, s"[ATT_GET] '$dbName' completed: found attachment '$name' of document '$doc'")
-          (contentType, result)
-
-        case Left(StatusCodes.NotFound) =>
-          transid.finished(
-            this,
-            start,
-            s"[ATT_GET] '$dbName', retrieving attachment '$name' of document '$doc'; not found.")
-          throw NoDocumentException("Not found on 'readAttachment'.")
-
-        case Left(code) =>
-          transid.failed(
-            this,
-            start,
-            s"[ATT_GET] '$dbName' failed to get attachment '$name' of document '$doc'; http status: '${code}'")
-          throw new Exception("Unexpected http response code: " + code)
-      }
-    }
-
-    reportFailure(
-      g,
-      failure =>
-        transid.failed(
-          this,
-          start,
-          s"[ATT_GET] '$dbName' internal error, name: '$name', doc: '$doc', failure: '${failure.getMessage}'",
-          ErrorLevel))
-  }
+    implicit transid: TransactionId): Future[(ContentType, T)] = attachmentStore.readAttachment(doc, name, sink)
 
   override protected[core] def deleteAttachments[T](doc: DocInfo)(implicit transid: TransactionId): Future[Boolean] =
-    // NOTE: this method is not intended for standalone use for CouchDB.
-    // To delete attachments, it is expected that the entire document is deleted.
-    Future.successful(true)
+    attachmentStore.deleteAttachments(doc)
 
   override def shutdown(): Unit = {
     Await.ready(client.shutdown(), 1.minute)

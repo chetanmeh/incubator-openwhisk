@@ -29,12 +29,15 @@ import whisk.common.{TransactionCounter, TransactionId}
 import whisk.core.database.{AttachmentStore, NoDocumentException}
 import whisk.core.entity.DocInfo
 
+import scala.concurrent.Future
 import scala.util.Random
 
 trait AttachmentStoreBehaviors extends ScalaFutures with TransactionCounter with Matchers with StreamLogging {
   this: FlatSpec =>
 
   override val instanceOrdinal = 0
+
+  private val prefix = Random.alphanumeric.take(10).mkString
 
   def store: AttachmentStore
 
@@ -46,68 +49,69 @@ trait AttachmentStoreBehaviors extends ScalaFutures with TransactionCounter with
     implicit val tid: TransactionId = transid()
     val bytes = randomBytes(4000)
 
-    val info = DocInfo ! (newDocId, "1")
-    val writeResult = store.attach(info, "code", ContentTypes.`application/octet-stream`, chunkedSource(bytes))
+    val info = newDocInfo
+    val info_v2 = store.attach(info, "code", ContentTypes.`application/octet-stream`, chunkedSource(bytes)).futureValue
 
-    writeResult.futureValue shouldBe info
+    info_v2.id shouldBe info.id
 
-    val readResult = store.readAttachment(info, "code", byteStringSink)
+    val (contentType, byteBuilder) = store.readAttachment(info_v2, "code", byteStringSink).futureValue
 
-    readResult.futureValue._1 shouldBe ContentTypes.`application/octet-stream`
-    readResult.futureValue._2.result() shouldBe ByteString(bytes)
+    contentType shouldBe ContentTypes.`application/octet-stream`
+    byteBuilder.result() shouldBe ByteString(bytes)
   }
 
   it should "add and then update attachment" in {
     implicit val tid: TransactionId = transid()
     val bytes = randomBytes(4000)
 
-    val info = DocInfo ! (newDocId, "1")
-    val writeResult = store.attach(info, "code", ContentTypes.`application/octet-stream`, chunkedSource(bytes))
+    val info = newDocInfo
+    val info_v2 = store.attach(info, "code", ContentTypes.`application/octet-stream`, chunkedSource(bytes)).futureValue
 
-    writeResult.futureValue shouldBe info
+    info_v2.id shouldBe info.id
 
     val updatedBytes = randomBytes(7000)
-    val writeResult2 = store.attach(info, "code", ContentTypes.`application/json`, chunkedSource(updatedBytes))
+    val info_v3 =
+      store.attach(info_v2, "code", ContentTypes.`application/json`, chunkedSource(updatedBytes)).futureValue
 
-    writeResult2.futureValue shouldBe info
+    info_v3.id shouldBe info.id
 
-    val readResult = store.readAttachment(info, "code", byteStringSink)
+    val (contentType, byteBuilder) = store.readAttachment(info_v3, "code", byteStringSink).futureValue
 
-    readResult.futureValue._1 shouldBe ContentTypes.`application/json`
-    readResult.futureValue._2.result() shouldBe ByteString(updatedBytes)
+    contentType shouldBe ContentTypes.`application/json`
+    byteBuilder.result() shouldBe ByteString(updatedBytes)
   }
 
   it should "add and delete attachment" in {
     implicit val tid: TransactionId = transid()
     val bytes = randomBytes(4000)
 
-    val info = DocInfo ! (newDocId, "1")
-    val wr1 = store.attach(info, "code", ContentTypes.`application/octet-stream`, chunkedSource(bytes))
-    val wr2 = store.attach(info, "code2", ContentTypes.`application/json`, chunkedSource(bytes))
+    val info = newDocInfo
+    val info_v2 = store.attach(info, "code", ContentTypes.`application/octet-stream`, chunkedSource(bytes)).futureValue
+    val info_v3 = store.attach(info_v2, "code2", ContentTypes.`application/json`, chunkedSource(bytes)).futureValue
 
-    val info2 = DocInfo ! (newDocId, "1")
-    val wr3 = store.attach(info2, "code2", ContentTypes.`application/json`, chunkedSource(bytes))
+    val info2 = newDocInfo
+    val info2_v2 = store.attach(info2, "code2", ContentTypes.`application/json`, chunkedSource(bytes)).futureValue
 
-    wr1.futureValue shouldBe info
-    wr2.futureValue shouldBe info
-    wr3.futureValue shouldBe info2
+    info_v2.id shouldBe info.id
+    info_v3.id shouldBe info.id
+    info2_v2.id shouldBe info2.id
 
     def getAttachmentType(info: DocInfo, name: String) = {
       store.readAttachment(info, name, byteStringSink)
     }
 
-    getAttachmentType(info, "code").futureValue._1 shouldBe ContentTypes.`application/octet-stream`
-    getAttachmentType(info, "code2").futureValue._1 shouldBe ContentTypes.`application/json`
+    getAttachmentType(info_v3, "code").futureValue._1 shouldBe ContentTypes.`application/octet-stream`
+    getAttachmentType(info_v3, "code2").futureValue._1 shouldBe ContentTypes.`application/json`
 
-    val deleteResult = store.deleteAttachments(info)
+    val deleteResult = deleteAttachment(info_v3)
 
     deleteResult.futureValue shouldBe true
 
-    getAttachmentType(info, "code").failed.futureValue shouldBe a[NoDocumentException]
-    getAttachmentType(info, "code2").failed.futureValue shouldBe a[NoDocumentException]
+    getAttachmentType(info_v3, "code").failed.futureValue shouldBe a[NoDocumentException]
+    getAttachmentType(info_v3, "code2").failed.futureValue shouldBe a[NoDocumentException]
 
     //Delete should not have deleted other attachments
-    getAttachmentType(info2, "code2").futureValue._1 shouldBe ContentTypes.`application/json`
+    getAttachmentType(info2_v2, "code2").futureValue._1 shouldBe ContentTypes.`application/json`
   }
 
   it should "throw NoDocumentException on reading non existing attachment" in {
@@ -122,7 +126,7 @@ trait AttachmentStoreBehaviors extends ScalaFutures with TransactionCounter with
   it should "not write an attachment when there is error in Source" in {
     implicit val tid: TransactionId = transid()
 
-    val info = DocInfo ! (newDocId, "1")
+    val info = newDocInfo
     val error = new Error("boom!")
     val faultySource = Source(1 to 10)
       .map { n ⇒
@@ -140,9 +144,18 @@ trait AttachmentStoreBehaviors extends ScalaFutures with TransactionCounter with
   it should "throw exception when doc is null" is pending
   it should "have start and end markers" is pending
 
-  private val prefix = Random.alphanumeric.take(10).mkString
-  @volatile var counter = 0
+  protected def deleteAttachment(info: DocInfo)(implicit transid: TransactionId): Future[Boolean] = {
+    store.deleteAttachments(info)
+  }
 
+  protected def newDocInfo: DocInfo = {
+    //By default create an info with dummy revision
+    //as apart from CouchDB other stores do not support the revision property
+    //for blobs
+    DocInfo ! (newDocId, "1")
+  }
+
+  @volatile private var counter = 0
   protected def newDocId: String = {
     counter = counter + 1
     s"attachmentTests_${prefix}_$counter"
