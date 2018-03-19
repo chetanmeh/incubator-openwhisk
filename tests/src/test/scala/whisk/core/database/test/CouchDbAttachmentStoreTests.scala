@@ -21,7 +21,7 @@ import akka.stream.ActorMaterializer
 import common.WskActorSystem
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.{BeforeAndAfter, FlatSpec}
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FlatSpec}
 import whisk.common.TransactionId
 import whisk.core.database.AttachmentStore
 import whisk.core.database.couchdb.CouchDbAttachmentStoreProvider
@@ -37,7 +37,8 @@ class CouchDbAttachmentStoreTests
     with WskActorSystem
     with DbUtils
     with ExecHelpers
-    with BeforeAndAfter {
+    with BeforeAndAfter
+    with BeforeAndAfterAll {
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   private lazy val entityStore = WhiskEntityStore.datastore()
@@ -58,4 +59,9 @@ class CouchDbAttachmentStoreTests
     cleanup()
   }
 
+  override def afterAll(): Unit = {
+    entityStore.shutdown()
+    store.shutdown()
+    super.afterAll()
+  }
 }

@@ -45,4 +45,7 @@ trait AttachmentStore {
    * Deletes all attachments linked to given document
    */
   protected[core] def deleteAttachments(doc: DocInfo)(implicit transid: TransactionId): Future[Boolean]
+
+  /** Shut it down. After this invocation, every other call is invalid. */
+  def shutdown(): Unit
 }

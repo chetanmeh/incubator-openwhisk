@@ -30,7 +30,8 @@ import whisk.core.ConfigKeys
 import whisk.core.database._
 import whisk.core.entity.DocInfo
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration._
 import scala.reflect.ClassTag
 
 object CouchDbAttachmentStoreProvider extends AttachmentStoreProvider {
@@ -155,6 +156,10 @@ class CouchDbAttachmentStore(
     // NOTE: this method is not intended for standalone use for CouchDB.
     // To delete attachments, it is expected that the entire document is deleted.
     Future.successful(true)
+
+  override def shutdown(): Unit = {
+    Await.ready(client.shutdown(), 1.minute)
+  }
 
   private def reportFailure[T, U](f: Future[T], onFailure: Throwable => U): Future[T] = {
     f.onFailure({

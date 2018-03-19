@@ -135,6 +135,8 @@ class MemoryAttachmentStore(dbName: String)(implicit system: ActorSystem,
       failure => s"[ATT_DELETE] '$dbName' internal error, doc: '$doc', failure: '${failure.getMessage}'")
   }
 
+  override def shutdown(): Unit = {}
+
   private def checkDocState(doc: DocInfo): Unit = {
     require(doc != null, "doc undefined")
     require(doc.rev.rev != null, "doc revision must be specified")

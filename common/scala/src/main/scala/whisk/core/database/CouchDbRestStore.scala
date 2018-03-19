@@ -381,6 +381,7 @@ class CouchDbRestStore[DocumentAbstraction <: DocumentSerializer](dbProtocol: St
 
   override def shutdown(): Unit = {
     Await.ready(client.shutdown(), 1.minute)
+    attachmentStore.shutdown()
   }
 
   private def reportFailure[T, U](f: Future[T], onFailure: Throwable => U): Future[T] = {
