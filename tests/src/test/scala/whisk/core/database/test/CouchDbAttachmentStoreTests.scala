@@ -55,6 +55,10 @@ class CouchDbAttachmentStoreTests
   override protected def deleteAttachment(info: DocInfo)(implicit transid: TransactionId): Future[Boolean] =
     entityStore.del(info)
 
+  override protected def garbageCollect(doc: DocInfo): Unit = {
+    docsToDelete += ((entityStore, doc))
+  }
+
   after {
     cleanup()
   }

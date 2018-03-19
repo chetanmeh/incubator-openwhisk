@@ -63,6 +63,7 @@ trait AttachmentStoreBehaviors
 
     contentType shouldBe ContentTypes.`application/octet-stream`
     byteBuilder.result() shouldBe ByteString(bytes)
+    garbageCollect(info_v2)
   }
 
   it should "add and then update attachment" in {
@@ -84,6 +85,8 @@ trait AttachmentStoreBehaviors
 
     contentType shouldBe ContentTypes.`application/json`
     byteBuilder.result() shouldBe ByteString(updatedBytes)
+
+    garbageCollect(info_v3)
   }
 
   it should "add and delete attachment" in {
@@ -117,6 +120,7 @@ trait AttachmentStoreBehaviors
 
     //Delete should not have deleted other attachments
     getAttachmentType(info2_v2, "code2").futureValue._1 shouldBe ContentTypes.`application/json`
+    garbageCollect(info2_v2)
   }
 
   it should "throw NoDocumentException on reading non existing attachment" in {
@@ -159,6 +163,8 @@ trait AttachmentStoreBehaviors
     //for blobs
     DocInfo ! (newDocId, "1")
   }
+
+  protected def garbageCollect(doc: DocInfo): Unit = {}
 
   @volatile private var counter = 0
   protected def newDocId: String = {
