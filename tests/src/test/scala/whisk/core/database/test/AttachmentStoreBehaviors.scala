@@ -23,7 +23,7 @@ import akka.http.scaladsl.model.ContentTypes
 import akka.stream.scaladsl.{Sink, Source, StreamConverters}
 import akka.util.{ByteString, ByteStringBuilder}
 import common.StreamLogging
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{FlatSpec, Matchers}
 import whisk.common.{TransactionCounter, TransactionId}
 import whisk.core.database.{AttachmentStore, NoDocumentException}
@@ -32,7 +32,12 @@ import whisk.core.entity.DocInfo
 import scala.concurrent.Future
 import scala.util.Random
 
-trait AttachmentStoreBehaviors extends ScalaFutures with TransactionCounter with Matchers with StreamLogging {
+trait AttachmentStoreBehaviors
+    extends ScalaFutures
+    with TransactionCounter
+    with Matchers
+    with StreamLogging
+    with IntegrationPatience {
   this: FlatSpec =>
 
   override val instanceOrdinal = 0
