@@ -68,6 +68,7 @@ dependencies {
     compile 'com.typesafe.akka:akka-http-testkit_2.11:10.0.10'
     compile 'com.github.java-json-tools:json-schema-validator:2.2.8'
     compile "org.mockito:mockito-core:2.15.0"
+    compile "com.amazonaws:aws-java-sdk-s3:1.11.226"
 
     compile project(':common:scala')
     compile project(':core:controller')
