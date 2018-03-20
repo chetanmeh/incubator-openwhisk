@@ -44,6 +44,7 @@ dependencies {
     compile 'io.fabric8:kubernetes-client:2.5.7'
     compile 'io.kamon:kamon-core_2.11:0.6.7'
     compile 'io.kamon:kamon-statsd_2.11:0.6.7'
+    compile 'com.lightbend.akka:akka-stream-alpakka-s3_2.11:0.17'
 }
 
 tasks.withType(ScalaCompile) {
