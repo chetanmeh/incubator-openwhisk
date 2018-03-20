@@ -20,16 +20,19 @@ package whisk.core.database.test
 import java.io.ByteArrayInputStream
 
 import akka.http.scaladsl.model.ContentTypes
+import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Sink, Source, StreamConverters}
 import akka.util.{ByteString, ByteStringBuilder}
-import common.StreamLogging
+import common.{StreamLogging, WskActorSystem}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 import whisk.common.{TransactionCounter, TransactionId}
 import whisk.core.database.{AttachmentStore, NoDocumentException}
 import whisk.core.entity.DocInfo
 
-import scala.concurrent.Future
+import scala.collection.mutable.ListBuffer
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.DurationInt
 import scala.util.Random
 
 trait AttachmentStoreBehaviors
@@ -37,16 +40,24 @@ trait AttachmentStoreBehaviors
     with TransactionCounter
     with Matchers
     with StreamLogging
-    with IntegrationPatience {
+    with WskActorSystem
+    with IntegrationPatience
+    with BeforeAndAfterAll {
   this: FlatSpec =>
 
   override val instanceOrdinal = 0
 
-  private val prefix = Random.alphanumeric.take(10).mkString
+  protected val prefix = s"attachmentTests_${Random.alphanumeric.take(10).mkString}"
+
+  protected implicit val materializer: ActorMaterializer = ActorMaterializer()
+
+  private val attachmentsToDelete = ListBuffer[String]()
 
   def store: AttachmentStore
 
   def storeType: String
+
+  def garbageCollectAttachments: Boolean = true
 
   behavior of s"$storeType AttachmentStore"
 
@@ -153,6 +164,16 @@ trait AttachmentStoreBehaviors
   it should "throw exception when doc is null" is pending
   it should "have start and end markers" is pending
 
+  override def afterAll(): Unit = {
+    if (garbageCollectAttachments) {
+      implicit val tid: TransactionId = transid()
+      val f =
+        Source(attachmentsToDelete.toList).mapAsync(2)(id => deleteAttachment(DocInfo ! (id, "1"))).runWith(Sink.ignore)
+      Await.result(f, 1.minute)
+    }
+    super.afterAll()
+  }
+
   protected def deleteAttachment(info: DocInfo)(implicit transid: TransactionId): Future[Boolean] = {
     store.deleteAttachments(info)
   }
@@ -161,7 +182,9 @@ trait AttachmentStoreBehaviors
     //By default create an info with dummy revision
     //as apart from CouchDB other stores do not support the revision property
     //for blobs
-    DocInfo ! (newDocId, "1")
+    val docId = newDocId
+    attachmentsToDelete += docId
+    DocInfo ! (docId, "1")
   }
 
   protected def garbageCollect(doc: DocInfo): Unit = {}
@@ -169,7 +192,7 @@ trait AttachmentStoreBehaviors
   @volatile private var counter = 0
   protected def newDocId: String = {
     counter = counter + 1
-    s"attachmentTests_${prefix}_$counter"
+    s"${prefix}_$counter"
   }
 
   private def randomBytes(size: Int): Array[Byte] = {

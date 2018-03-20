@@ -17,8 +17,6 @@
 
 package whisk.core.database.test
 
-import akka.stream.ActorMaterializer
-import common.WskActorSystem
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FlatSpec}
@@ -34,13 +32,10 @@ import scala.concurrent.Future
 class CouchDbAttachmentStoreTests
     extends FlatSpec
     with AttachmentStoreBehaviors
-    with WskActorSystem
     with DbUtils
     with ExecHelpers
     with BeforeAndAfter
     with BeforeAndAfterAll {
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
-
   private lazy val entityStore = WhiskEntityStore.datastore()
   override val store: AttachmentStore = CouchDbAttachmentStoreProvider.makeStore[WhiskEntity]()
   override def storeType: String = "CouchDb"
@@ -58,6 +53,8 @@ class CouchDbAttachmentStoreTests
   override protected def garbageCollect(doc: DocInfo): Unit = {
     docsToDelete += ((entityStore, doc))
   }
+
+  override val garbageCollectAttachments: Boolean = false
 
   after {
     cleanup()
