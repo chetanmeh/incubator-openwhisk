@@ -200,6 +200,12 @@
       "CONFIG_logback_log_level": "{{ controller.loglevel }}"
 
       "CONFIG_whisk_transactions_stride": "{{ transactions.stride | default() }}"
+
+      "CONFIG_whisk_spi_AttachmentStoreProvider": "whisk.core.database.s3.S3AttachmentStoreProvider"
+      "CONFIG_whisk_s3_bucket": "{{ lookup('env','WHISK_AWS_BUCKET') }}"
+      "AWS_ACCESS_KEY_ID": "{{ lookup('env','AWS_ACCESS_KEY_ID') }}"
+      "AWS_SECRET_ACCESS_KEY": "{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}"
+      "AWS_REGION": "{{ lookup('env','AWS_REGION') }}"
     volumes:
       - "{{ whisk_logs_dir }}/{{ controller_name }}:/logs"
       - "{{ controller.confdir }}/{{ controller_name }}:/conf"

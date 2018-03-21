@@ -211,6 +211,11 @@
         -e CONFIG_whisk_timeLimit_max='{{ limit_action_time_max | default() }}'
         -e CONFIG_whisk_timeLimit_std='{{ limit_action_time_std | default() }}'
         -e CONFIG_whisk_activation_payload_max='{{ limit_activation_payload | default() }}'
+        -e CONFIG_whisk_spi_AttachmentStoreProvider='whisk.core.database.s3.S3AttachmentStoreProvider'
+        -e CONFIG_whisk_s3_bucket='{{ lookup('env','WHISK_AWS_BUCKET') }}'
+        -e AWS_ACCESS_KEY_ID='{{ lookup('env','AWS_ACCESS_KEY_ID') }}'
+        -e AWS_SECRET_ACCESS_KEY='{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}'
+        -e AWS_REGION='{{ lookup('env','AWS_REGION') }}'
         -v /sys/fs/cgroup:/sys/fs/cgroup
         -v /run/runc:/run/runc
         -v {{ whisk_logs_dir }}/invoker{{ groups['invokers'].index(inventory_hostname) }}:/logs

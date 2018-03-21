@@ -58,4 +58,12 @@ whisk {
         client-auth = "{{ controller.ssl.clientAuth }}"
       }
     }
+
+    spi {
+        AttachmentStoreProvider = whisk.core.database.s3.S3AttachmentStoreProvider
+    }
+
+    s3 {
+        bucket = "{{ lookup('env','WHISK_AWS_BUCKET') }}"
+    }
 }
