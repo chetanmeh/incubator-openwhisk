@@ -2,6 +2,7 @@ apply plugin: 'scala'
 apply plugin: 'application'
 apply plugin: 'eclipse'
 apply plugin: 'maven'
+apply plugin: 'org.scoverage'
 
 ext.dockerImageName = 'controller'
 apply from: '../../gradle/docker.gradle'
@@ -17,6 +18,7 @@ dependencies {
     compile 'com.typesafe.akka:akka-distributed-data_2.11:2.5.4'
     compile "org.scala-lang:scala-library:${gradle.scala.version}"
     compile project(':common:scala')
+    scoverage gradle.scoverage.deps
 }
 
 tasks.withType(ScalaCompile) {

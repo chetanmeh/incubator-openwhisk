@@ -46,9 +46,6 @@ fi
 
 cd $ROOTDIR/ansible
 
-ANSIBLE_CMD="ansible-playbook -i environments/local -e docker_image_prefix=testing"
-GRADLE_PROJS_SKIP="-x :actionRuntimes:pythonAction:distDocker  -x :actionRuntimes:python2Action:distDocker -x actionRuntimes:swift3.1.1Action:distDocker -x actionRuntimes:swift4.1Action:distDocker -x :actionRuntimes:javaAction:distDocker"
-
 $ANSIBLE_CMD setup.yml -e mode=HA
 $ANSIBLE_CMD prereq.yml
 $ANSIBLE_CMD couchdb.yml
@@ -66,10 +63,12 @@ $ANSIBLE_CMD openwhisk.yml
 
 cd $ROOTDIR
 cat whisk.properties
-TERM=dumb ./gradlew :tests:testLean $GRADLE_PROJS_SKIP
+TERM=dumb ./gradlew :tests:testCoverageLean :tests:reportCoverage
 
 cd $ROOTDIR/ansible
 $ANSIBLE_CMD logs.yml
 
 cd $ROOTDIR
 tools/build/checkLogs.py logs
+
+bash <(curl -s https://codecov.io/bash)
