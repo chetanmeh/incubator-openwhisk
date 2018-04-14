@@ -46,6 +46,9 @@ dependencies {
     compile 'io.kamon:kamon-statsd_2.11:0.6.7'
     //for mesos
     compile 'com.adobe.api.platform.runtime:mesos-actor:0.0.7'
+
+    compile 'io.reactivex:rxscala_2.11:0.26.5'
+    compile 'com.microsoft.azure:azure-cosmosdb:1.0.0'
 }
 
 tasks.withType(ScalaCompile) {
