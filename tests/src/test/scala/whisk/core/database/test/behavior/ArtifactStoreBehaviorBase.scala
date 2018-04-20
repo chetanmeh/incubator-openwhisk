@@ -61,6 +61,7 @@ trait ArtifactStoreBehaviorBase
 
   override def afterEach(): Unit = {
     cleanup()
+    stream.reset()
   }
 
   override def afterAll(): Unit = {
