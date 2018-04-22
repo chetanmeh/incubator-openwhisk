@@ -56,6 +56,8 @@ cd $ROOTDIR
 
 TERM=dumb ./gradlew distDocker -PdockerImagePrefix=testing $GRADLE_PROJS_SKIP
 
+tools/db/initCosmosdb.py --endpoint=$COSMOSDB_HOST --db=$COSMOSDB_NAME --key=$COSMOSDB_KEY
+
 cd $ROOTDIR/ansible
 
 $ANSIBLE_CMD wipe.yml
