@@ -56,6 +56,8 @@ cd $ROOTDIR
 
 TERM=dumb ./gradlew distDocker -PdockerImagePrefix=testing $GRADLE_PROJS_SKIP
 
+tools/db/initCosmosdb.py --endpoint=$COSMOSDB_HOST --db=$COSMOSDB_NAME --key=$COSMOSDB_KEY
+
 cd $ROOTDIR/ansible
 
 $ANSIBLE_CMD wipe.yml
@@ -63,10 +65,12 @@ $ANSIBLE_CMD openwhisk.yml
 
 cd $ROOTDIR
 cat whisk.properties
-TERM=dumb ./gradlew :tests:testLean $GRADLE_PROJS_SKIP
+TERM=dumb ./gradlew :tests:testCoverageLean :tests:reportCoverage
 
 cd $ROOTDIR/ansible
 $ANSIBLE_CMD logs.yml
 
 cd $ROOTDIR
 tools/build/checkLogs.py logs
+
+bash <(curl -s https://codecov.io/bash)
