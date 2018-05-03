@@ -56,6 +56,8 @@ cd $ROOTDIR
 
 TERM=dumb ./gradlew distDocker -PdockerImagePrefix=testing $GRADLE_PROJS_SKIP
 
+tools/db/cosmosDbUtil.py --endpoint=$COSMOSDB_ENDPOINT  --key=$COSMOSDB_KEY init "travis-$TRAVIS_JOB_ID"
+
 cd $ROOTDIR/ansible
 
 $ANSIBLE_CMD wipe.yml
@@ -70,5 +72,7 @@ $ANSIBLE_CMD logs.yml
 
 cd $ROOTDIR
 tools/build/checkLogs.py logs
+
+tools/db/cosmosDbUtil.py --endpoint=$COSMOSDB_ENDPOINT  --key=$COSMOSDB_KEY drop "travis-$TRAVIS_JOB_ID"
 
 bash <(curl -s https://codecov.io/bash)
