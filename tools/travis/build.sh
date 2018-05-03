@@ -24,6 +24,8 @@ SCRIPTDIR=$(cd $(dirname "$0") && pwd)
 ROOTDIR="$SCRIPTDIR/../.."
 HOMEDIR="$SCRIPTDIR/../../../"
 
+export COSMOSDB_NAME="travis-$TRAVIS_JOB_ID"
+
 # clone the openwhisk utilities repo.
 cd $HOMEDIR
 git clone https://github.com/apache/incubator-openwhisk-utilities.git
