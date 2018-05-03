@@ -202,6 +202,11 @@
 
       "CONFIG_whisk_transactions_stride": "{{ transactions.stride | default() }}"
 
+      "CONFIG_whisk_spi_ArtifactStoreProvider": "whisk.core.database.cosmosdb.CosmosDBArtifactStoreProvider"
+      "CONFIG_whisk_cosmosdb_endpoint": "{{ lookup('env','COSMOSDB_ENDPOINT') }}"
+      "CONFIG_whisk_cosmosdb_key": "{{ lookup('env','COSMOSDB_KEY') }}"
+      "CONFIG_whisk_cosmosdb_db": "{{ lookup('env','COSMOSDB_NAME') }}"
+
 - name: create seed nodes list
   set_fact:
     seed_nodes_list: "{{ seed_nodes_list | default([]) }} + [ '{{ item.1 }}:{{ controller.akka.cluster.basePort+item.0 }}' ]"
