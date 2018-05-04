@@ -69,3 +69,14 @@ jobs:
         - OPENWHISK_HOST="172.17.0.1" API_KEY="$(cat ansible/files/auth.guest)" CONNECTIONS="100" REQUESTS_PER_SEC="1" ./gradlew gatlingRun-BlockingInvokeOneActionSimulation
       env:
         - DESCRIPTION="Execute wrk-performance test suite."
+    - script:
+        - export ARTIFACT_STORE="whisk.core.database.cosmosdb.CosmosDBArtifactStoreProvider"
+        - ./tools/travis/build.sh
+        - ./tools/db/cosmosDbUtil.py --endpoint=$COSMOSDB_ENDPOINT  --key=$COSMOSDB_KEY init "travis-$TRAVIS_JOB_ID"
+        - ansible-playbook -i ansible/environments/local ansible/logs.yml # collect logs regardless of build exit
+        - ./tools/db/cosmosDbUtil.py --endpoint=$COSMOSDB_ENDPOINT  --key=$COSMOSDB_KEY drop "travis-$TRAVIS_JOB_ID"
+        - ./tools/travis/box-upload.py "$TRAVIS_BUILD_DIR/logs" "$TRAVIS_BUILD_ID-$TRAVIS_BRANCH.tar.gz"
+      if: env(COSMOSDB_KEY) Is present
+      env:
+        - DESCRIPTION="CosmosDB"
+

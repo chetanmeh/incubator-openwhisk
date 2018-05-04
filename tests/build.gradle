@@ -33,6 +33,18 @@ def leanExcludes = [
     '**/*WskCli*'
 ]
 
+if (System.getenv("ARTIFACT_STORE") == 'whisk.core.database.cosmosdb.CosmosDBArtifactStoreProvider') {
+    leanExcludes += [
+        //Exclude for now as they use wskadmin to created test user which does not work
+        //with CosmosDB for now
+        '**/*WskRestEntitlementTests*',
+
+        //Some of the tests in this suite lead to large response exception
+        //due to limits from netty
+        '**/*ActionLimitsTests*'
+    ]
+}
+
 task testLean(type: Test) {
     exclude leanExcludes
 }
