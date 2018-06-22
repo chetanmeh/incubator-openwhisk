@@ -29,7 +29,7 @@ cd $ROOTDIR
 
 LOG_NAME=$1
 TAGS=${2-""}
-LOG_TAR_NAME="${LOG_NAME}_${TRAVIS_BUILD_ID}-$TRAVIS_BRANCH.tar.gz"
+LOG_TAR_NAME="${LOG_NAME}_${TRAVIS_BUILD_ID}-$TRAVIS_JOB_NUMBER-$TRAVIS_BRANCH.tar.gz"
 
 ansible-playbook -i ansible/environments/local ansible/logs.yml
 
