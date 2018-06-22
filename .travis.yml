@@ -64,6 +64,7 @@ jobs:
       env: DESCRIPTION="System Tests"
     - script:
         - export SPI_ARTIFACT_STORE="whisk.core.database.cosmosdb.CosmosDBArtifactStoreProvider"
+        - export COSMOSDB_NAME="travis-$TRAVIS_BUILD_NUMBER-$TRAVIS_JOB_ID"
         - ./tools/travis/setupCosmos.sh
         - ./tools/travis/runUnitTests.sh
         - ./tools/travis/checkAndUploadLogs.sh unit db
@@ -72,6 +73,7 @@ jobs:
       if: env(COSMOSDB_KEY) Is present
     - script:
        - export SPI_ARTIFACT_STORE="whisk.core.database.cosmosdb.CosmosDBArtifactStoreProvider"
+       - export COSMOSDB_NAME="travis-$TRAVIS_BUILD_NUMBER-$TRAVIS_JOB_ID"
        - ./tools/travis/setupCosmos.sh
        - ./tools/travis/runSystemTests.sh
        - ./tools/travis/checkAndUploadLogs.sh system

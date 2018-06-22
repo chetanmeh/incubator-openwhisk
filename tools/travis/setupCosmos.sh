@@ -23,4 +23,4 @@ SCRIPTDIR=$(cd $(dirname "$0") && pwd)
 ROOTDIR="$SCRIPTDIR/../.."
 
 cd $ROOTDIR
-./tools/db/cosmosDbUtil.py --endpoint=$COSMOSDB_ENDPOINT  --key=$COSMOSDB_KEY init "travis-$TRAVIS_JOB_ID"
+./tools/db/cosmosDbUtil.py --endpoint=$COSMOSDB_ENDPOINT  --key=$COSMOSDB_KEY init $COSMOSDB_NAME
