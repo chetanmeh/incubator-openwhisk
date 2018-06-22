@@ -30,3 +30,15 @@ kafka_topics_invoker_retentionBytes: 104857600
 kafka_topics_invoker_retentionMS: 300000
 
 env_hosts_dir: "{{ playbook_dir }}/environments/local"
+
+controller_extraEnv:
+  "CONFIG_whisk_cosmosdb_endpoint" : "{{ lookup('env','COSMOSDB_ENDPOINT') }}"
+  "CONFIG_whisk_cosmosdb_key" : "{{ lookup('env','COSMOSDB_KEY') }}"
+  "CONFIG_whisk_cosmosdb_db" : "{{ lookup('env','COSMOSDB_NAME') }}"
+  "CONFIG_whisk_spi_ArtifactStoreProvider" : "{{ lookup('env','SPI_ARTIFACT_STORE') }}"
+
+invoker_extraEnv:
+  "CONFIG_whisk_cosmosdb_endpoint" : "{{ lookup('env','COSMOSDB_ENDPOINT') }}"
+  "CONFIG_whisk_cosmosdb_key" : "{{ lookup('env','COSMOSDB_KEY') }}"
+  "CONFIG_whisk_cosmosdb_db" : "{{ lookup('env','COSMOSDB_NAME') }}"
+  "CONFIG_whisk_spi_ArtifactStoreProvider" : "{{ lookup('env','SPI_ARTIFACT_STORE') }}"
