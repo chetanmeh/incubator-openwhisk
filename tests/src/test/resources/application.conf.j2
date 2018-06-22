@@ -2,6 +2,7 @@ whisk.spi {
   SimpleSpi = whisk.spi.SimpleSpiImpl
   MissingSpi = whisk.spi.MissingImpl
   MissingModule = missing.module
+ArtifactStoreProvider = ${?SPI_ARTIFACT_STORE}
 }
 
 # Blocking requests fall back to non-blocking after ~60s

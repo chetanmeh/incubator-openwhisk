@@ -63,6 +63,20 @@ jobs:
        - ./tools/travis/checkAndUploadLogs.sh system
       env: DESCRIPTION="System Tests"
     - script:
+        - ./tools/travis/setupCosmos.sh
+        - ./tools/travis/runUnitTests.sh
+        - ./tools/travis/checkAndUploadLogs.sh unit db
+        - ./tools/travis/teardownCosmos.sh
+      env: DESCRIPTION="Unit Tests (CosmosDB)"
+      if: env(COSMOSDB_KEY) Is present
+    - script:
+       - ./tools/travis/setupCosmos.sh
+       - ./tools/travis/runSystemTests.sh
+       - ./tools/travis/checkAndUploadLogs.sh system
+       - ./tools/travis/teardownCosmos.sh
+      env: DESCRIPTION="System Tests (CosmosDB)"
+      if: env(COSMOSDB_KEY) Is present
+    - script:
         - ./tests/performance/preparation/deploy.sh
         - TERM=dumb ./tests/performance/wrk_tests/latency.sh "https://172.17.0.1:10001" "$(cat ansible/files/auth.guest)" 2m
         - TERM=dumb ./tests/performance/wrk_tests/throughput.sh "https://172.17.0.1:10001" "$(cat ansible/files/auth.guest)" 4 2 2m
