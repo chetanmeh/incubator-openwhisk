@@ -25,4 +25,4 @@ ROOTDIR="$SCRIPTDIR/../.."
 cd $ROOTDIR
 ./tools/db/cosmosDbUtil.py --endpoint=$COSMOSDB_ENDPOINT  --key=$COSMOSDB_KEY init "travis-$TRAVIS_JOB_ID"
 
-export "SPI_ARTIFACT_STORE"="whisk.core.database.cosmosdb.CosmosDBArtifactStoreProvider"
+export SPI_ARTIFACT_STORE="whisk.core.database.cosmosdb.CosmosDBArtifactStoreProvider"
