@@ -66,16 +66,19 @@ install:
 jobs:
   include:
     - script:
+        - export ORG_GRADLE_PROJECT_testSetName="REQUIRE_ONLY_DB"
         - ./tools/travis/runUnitTests.sh
         - ./tools/travis/checkAndUploadLogs.sh unit db
       env: DESCRIPTION="Unit Tests"
     - script:
+       - export ORG_GRADLE_PROJECT_testSetName="REQUIRE_SYSTEM"
        - ./tools/travis/runSystemTests.sh
        - ./tools/travis/checkAndUploadLogs.sh system
       env: DESCRIPTION="System Tests"
     - script:
         - export SPI_ARTIFACT_STORE="whisk.core.database.cosmosdb.CosmosDBArtifactStoreProvider"
         - export COSMOSDB_NAME="travis-$TRAVIS_BUILD_NUMBER-$TRAVIS_JOB_ID"
+        - export ORG_GRADLE_PROJECT_testSetName="UNIT_COSMOSDB"
         - ./tools/travis/setupCosmos.sh
         - ./tools/travis/runUnitTests.sh
         - ./tools/travis/checkAndUploadLogs.sh unit db
@@ -85,6 +88,7 @@ jobs:
     - script:
        - export SPI_ARTIFACT_STORE="whisk.core.database.cosmosdb.CosmosDBArtifactStoreProvider"
        - export COSMOSDB_NAME="travis-$TRAVIS_BUILD_NUMBER-$TRAVIS_JOB_ID"
+       - export ORG_GRADLE_PROJECT_testSetName="SYSTEM_COSMOSDB"
        - ./tools/travis/setupCosmos.sh
        - ./tools/travis/runSystemTests.sh
        - ./tools/travis/checkAndUploadLogs.sh system
