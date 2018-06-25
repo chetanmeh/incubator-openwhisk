@@ -24,8 +24,6 @@ ROOTDIR="$SCRIPTDIR/../.."
 
 cd $ROOTDIR/tools/travis
 
-export ORG_GRADLE_PROJECT_testSetName="REQUIRE_SYSTEM"
-
 ./setupPrereq.sh
 
 ./distDocker.sh
