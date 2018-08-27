@@ -1,6 +1,16 @@
 include classpath("application.conf")
 
 whisk {
+{% if lookup('env', 'SPI_ARTIFACT_STORE') == 'whisk.core.database.cosmosdb.CosmosDBArtifactStoreProvider' %}
+  spi {
+    ArtifactStoreProvider = "whisk.core.database.cosmosdb.CosmosDBArtifactStoreProvider"
+  }
+  cosmosdb {
+    endpoint = "{{ lookup('env','COSMOSDB_ENDPOINT') }}"
+    key      = "{{ lookup('env','COSMOSDB_KEY') }}"
+    db       = "{{ lookup('env','COSMOSDB_NAME') }}"
+  }
+{% else %}
   couchdb {
     protocol = "{{ db.protocol }}"
     host     = "{{ db.host }}"
@@ -14,4 +24,5 @@ whisk {
       WhiskActivation = "{{ db.whisk.activations }}"
     }
   }
+{% endif %}
 }
