@@ -204,7 +204,7 @@ class CosmosDBArtifactStore[DocumentAbstraction <: DocumentSerializer](protected
 
     val publisher =
       RxReactiveStreams.toPublisher(client.queryDocuments(collection.getSelfLink, querySpec, newFeedOptions()))
-    val f = Source
+    val resultStream = Source
       .fromPublisher(publisher)
       .mapConcat(asSeq)
       .drop(skip)
@@ -214,6 +214,12 @@ class CosmosDBArtifactStore[DocumentAbstraction <: DocumentSerializer](protected
           .transformViewResult(ddoc, viewName, startKey, endKey, realIncludeDocs, js, CosmosDBArtifactStore.this))
       .mapAsync(1)(identity)
       .mapConcat(identity)
+
+    //In most cases limit is enforced at query level. However with joins the
+    //limit would need to be enforced at client side.
+    val stream = if (limit > 0) resultStream.take(limit) else resultStream
+
+    val f = stream
       .runWith(Sink.seq)
       .map(_.toList)
 
