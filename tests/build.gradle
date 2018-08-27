@@ -111,7 +111,8 @@ ext.testSets["SYSTEM_COSMOSDB"] = [
     "includes" : ext.testSets["REQUIRE_SYSTEM"]["includes"],
     "excludes" : ext.testSets["REQUIRE_SYSTEM"]["excludes"] +
         [
-            "**/*WskRestEntitlementTests*" //Needs compatible wskadmin support. Pending
+            "**/*WskRestEntitlementTests*", //Needs compatible wskadmin support. Pending
+            "**/*NamespaceBlacklistTests*"
         ]
 ]
 
