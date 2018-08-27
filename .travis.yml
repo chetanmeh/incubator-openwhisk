@@ -69,12 +69,12 @@ jobs:
         - export ORG_GRADLE_PROJECT_testSetName="REQUIRE_ONLY_DB"
         - ./tools/travis/runUnitTests.sh
         - ./tools/travis/checkAndUploadLogs.sh unit db
-      env: DESCRIPTION="Unit Tests"
+      name: "Unit Tests"
     - script:
        - export ORG_GRADLE_PROJECT_testSetName="REQUIRE_SYSTEM"
        - ./tools/travis/runSystemTests.sh
        - ./tools/travis/checkAndUploadLogs.sh system
-      env: DESCRIPTION="System Tests"
+      name: "System Tests"
     - script:
         - export SPI_ARTIFACT_STORE="whisk.core.database.cosmosdb.CosmosDBArtifactStoreProvider"
         - export COSMOSDB_NAME="travis-$TRAVIS_BUILD_NUMBER-$TRAVIS_JOB_ID"
@@ -83,7 +83,7 @@ jobs:
         - ./tools/travis/runUnitTests.sh
         - ./tools/travis/checkAndUploadLogs.sh unit db
         - ./tools/travis/teardownCosmos.sh
-      env: DESCRIPTION="Unit Tests (CosmosDB)"
+      name: "Unit Tests (Cosmos)"
       if: env(COSMOSDB_KEY) Is present
     - script:
        - export SPI_ARTIFACT_STORE="whisk.core.database.cosmosdb.CosmosDBArtifactStoreProvider"
@@ -93,7 +93,7 @@ jobs:
        - ./tools/travis/runSystemTests.sh
        - ./tools/travis/checkAndUploadLogs.sh system
        - ./tools/travis/teardownCosmos.sh
-      env: DESCRIPTION="System Tests (CosmosDB)"
+      name: "System Tests (Cosmos)"
       if: env(COSMOSDB_KEY) Is present
     - script:
         - ./tests/performance/preparation/deploy.sh
@@ -104,5 +104,4 @@ jobs:
         - OPENWHISK_HOST="172.17.0.1" API_KEY="$(cat ansible/files/auth.guest)" CONNECTIONS="100" REQUESTS_PER_SEC="1" ./gradlew gatlingRun-BlockingInvokeOneActionSimulation
         # The following configuration does not make much sense. But we do not have enough users. But it's good to verify, that the test is still working.
         - OPENWHISK_HOST="172.17.0.1" USERS="1" REQUESTS_PER_SEC="1" ./gradlew gatlingRun-ColdBlockingInvokeSimulation
-      env:
-        - DESCRIPTION="Execute wrk-performance test suite."
+      name: "Performance Test Suite"
