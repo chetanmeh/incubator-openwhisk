@@ -109,6 +109,10 @@
       -Dcom.sun.management.jmxremote.rmi.port={{ jmx_remote_rmi_port }}
       -Dcom.sun.management.jmxremote.port={{ jmx_remote_port }}
 
+- name: Load config from template
+  set_fact:
+      openwhisk_config: "{{ lookup('template', 'config.j2') }}"
+
 - name: populate environment variables for controller
   set_fact:
     env:
@@ -122,7 +126,7 @@
       "CONTROLLER_OPTS": "{{ controller_args | default(controller.arguments) }}"
       "CONTROLLER_INSTANCES": "{{ controller.instances }}"
       "JMX_REMOTE": "{{ jmx.enabled }}"
-
+      "OPENWHISK_ENCODED_CONFIG": "{{ openwhisk_config | b64encode}}"
       "PORT": 8080
       "TZ": "{{ docker.timezone }}"
 
@@ -161,16 +165,6 @@
       "CONFIG_whisk_kafka_common_sslKeystorePassword":
         "{{ kafka.ssl.keystore.password }}"
 
-      "CONFIG_whisk_couchdb_protocol": "{{ db.protocol }}"
-      "CONFIG_whisk_couchdb_host": "{{ db.host }}"
-      "CONFIG_whisk_couchdb_port": "{{ db.port }}"
-      "CONFIG_whisk_couchdb_username": "{{ db.credentials.controller.user }}"
-      "CONFIG_whisk_couchdb_password": "{{ db.credentials.controller.pass }}"
-      "CONFIG_whisk_couchdb_provider": "{{ db.provider }}"
-      "CONFIG_whisk_couchdb_databases_WhiskAuth": "{{ db.whisk.auth }}"
-      "CONFIG_whisk_couchdb_databases_WhiskEntity": "{{ db.whisk.actions }}"
-      "CONFIG_whisk_couchdb_databases_WhiskActivation":
-        "{{ db.whisk.activations }}"
       "CONFIG_whisk_db_actionsDdoc": "{{ db_whisk_actions_ddoc | default() }}"
       "CONFIG_whisk_db_activationsDdoc": "{{ db_whisk_activations_ddoc | default() }}"
       "CONFIG_whisk_db_activationsFilterDdoc": "{{ db_whisk_activations_filter_ddoc | default() }}"
