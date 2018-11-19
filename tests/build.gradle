@@ -38,6 +38,7 @@ project.archivesBaseName = "openwhisk-tests"
 
 tasks.withType(Test) {
     systemProperties(System.getProperties())
+    systemProperty('io.netty.leakDetection.level', 'PARANOID')
 
     testLogging {
         events "passed", "skipped", "failed"
