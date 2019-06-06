@@ -23,7 +23,7 @@ plugins {
     id 'maven'
     id 'org.hidetake.swagger.generator' version '2.18.1'
     id 'org.scoverage'
-    id 'scala'
+    id 'com.triplequote.hydra'
 }
 
 compileTestScala.options.encoding = 'UTF-8'

@@ -20,7 +20,7 @@ plugins {
     id 'eclipse'
     id 'maven'
     id 'org.scoverage'
-    id 'scala'
+    id 'com.triplequote.hydra'
 }
 
 ext.dockerImageName = 'controller'

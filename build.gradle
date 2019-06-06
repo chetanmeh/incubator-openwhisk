@@ -18,15 +18,18 @@
 buildscript {
     repositories {
         jcenter()
+        maven {
+            url "https://repo.triplequote.com/libs-release/"
+        }
     }
     dependencies {
         classpath "cz.alenkacz:gradle-scalafmt:${gradle.scalafmt.version}"
     }
 }
-
 plugins {
     id "com.gradle.build-scan" version "2.3"
     id "org.scoverage" version "3.1.5" apply false
+    id "com.triplequote.hydra" version "1.1.1" apply false
 }
 
 
@@ -63,7 +66,7 @@ subprojects {
     }
 
     afterEvaluate {
-        if (project.plugins.hasPlugin('scala')) {
+        if (project.plugins.hasPlugin('scala') || project.plugins.hasPlugin('com.triplequote.hydra')) {
             repositories {
                 mavenCentral()
             }
@@ -103,6 +106,20 @@ subprojects {
                 archives sourcesJar
                 archives testSourcesJar
                 archives testClassesJar
+            }
+        }
+
+        if (project.plugins.hasPlugin('com.triplequote.hydra')) {
+            hydra {
+                metricsServiceVersion = "1.1.2"
+                version = "2.2.0"
+                // optional:
+                workers = 4
+            }
+            repositories {
+                maven {
+                    url "https://repo.triplequote.com/libs-release/"
+                }
             }
         }
 
