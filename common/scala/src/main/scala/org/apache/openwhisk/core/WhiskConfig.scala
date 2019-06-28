@@ -263,4 +263,7 @@ object ConfigKeys {
   val featureFlags = "whisk.feature-flags"
 
   val whiskConfig = "whisk.config"
+
+  val azureFunctions = "whisk.azure.functions"
+  val azure = "whisk.azure"
 }
