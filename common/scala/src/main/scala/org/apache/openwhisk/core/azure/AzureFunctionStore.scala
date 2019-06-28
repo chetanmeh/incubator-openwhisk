@@ -17,11 +17,14 @@
 
 package org.apache.openwhisk.core.azure
 
+import java.net.InetSocketAddress
+
 import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
+import akka.http.scaladsl.{ClientTransport, Http}
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.settings.{ClientConnectionSettings, ConnectionPoolSettings}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.typesafe.config.{Config, ConfigFactory}
@@ -55,6 +58,7 @@ class AzureFunctionStore(funcConfig: AzureFunctionConfig, azureConfig: AzureConf
                                                                                     logging: Logging) {
   import AzureClient._
   private implicit val materializer: ActorMaterializer = ActorMaterializer()
+  private val httpSettings = clientSettings(system)
 
   def getFunction(fqn: FullyQualifiedEntityName)(
     implicit transid: TransactionId): Future[Option[AzureFunctionAction]] = {
@@ -83,7 +87,7 @@ class AzureFunctionStore(funcConfig: AzureFunctionConfig, azureConfig: AzureConf
    */
   def requestJson[T: RootJsonReader](futureRequest: Future[HttpRequest]): Future[Either[StatusCode, T]] =
     futureRequest.flatMap { request =>
-      Http().singleRequest(request).flatMap { response =>
+      Http().singleRequest(request, settings = httpSettings).flatMap { response =>
         if (response.status.isSuccess) {
           Unmarshal(response.entity.withoutSizeLimit).to[T].map(Right.apply)
         } else {
@@ -124,5 +128,17 @@ object AzureClient {
     implicit ec: ExecutionContext): Future[HttpRequest] = {
     val b = Future.successful(FormData(body).toEntity)
     mkRequest(method, uri, b, headers)
+  }
+
+  def clientSettings(system: ActorSystem): ConnectionPoolSettings = {
+    sys.env.get("HTTPS_PROXY") match {
+      case Some(p) =>
+        val u = Uri(p)
+        val proxyTransport =
+          ClientTransport.httpsProxy(InetSocketAddress.createUnresolved(u.authority.host.address(), u.authority.port))
+        ConnectionPoolSettings(system).withConnectionSettings(
+          ClientConnectionSettings(system).withTransport(proxyTransport))
+      case None => ConnectionPoolSettings(system)
+    }
   }
 }
