@@ -53,8 +53,9 @@ class AzureFunctionContainerFactory(
       .map { action =>
         val actionRev = action.rev
         //TODO Cache the mapping with key as FQN + docRev
-        val f = azureFuncStore.getFunction(action.fullyQualifiedName(false)).flatMap {
-          case Some(l @ AzureFunctionAction(_, `actionRev`)) =>
+        val f = azureFuncStore.getFunction(action.exec.kind, action.fullyQualifiedName(false)).flatMap {
+          //TODO Add check for revision
+          case Some(l @ AzureFunctionAction(_, _)) =>
             Future.successful(AzureFunctionContainer(l, azureFuncStore))
           case Some(l) =>
             logging.info(

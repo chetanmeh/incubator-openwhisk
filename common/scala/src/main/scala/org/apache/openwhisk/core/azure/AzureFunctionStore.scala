@@ -66,9 +66,12 @@ class AzureFunctionStore(funcConfig: AzureFunctionConfig, azureConfig: AzureConf
   private implicit val materializer: ActorMaterializer = ActorMaterializer()
   private val httpSettings = clientSettings(system)
 
-  def getFunction(fqn: FullyQualifiedEntityName)(
+  def getFunction(kind: String, fqn: FullyQualifiedEntityName)(
     implicit transid: TransactionId): Future[Option[AzureFunctionAction]] = {
-    ???
+    //TODO Eventually we need to list for deployed function and check if the function exist
+    //For now using a basic heuristic
+    if (kind == "nodejs:8") Future.successful(Some(AzureFunctionAction(fqn.name.name, DocRevision.empty)))
+    else Future.successful(None)
   }
 
   def invokeFunction(action: AzureFunctionAction, body: JsObject)(
