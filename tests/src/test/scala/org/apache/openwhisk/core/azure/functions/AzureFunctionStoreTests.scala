@@ -62,10 +62,20 @@ class AzureFunctionStoreTests
     println(r.response.right.get.entity)
   }
 
-  it should "fetch bearer token" in {
+  ignore should "fetch bearer token" in {
     val token = store.fetchBearerToken().futureValue
     println(token)
-    token.right.value should not be (null)
+    token.right.value should not be null
     println(token.right.get.access_token)
+  }
+
+  it should "invoke the actual function" in {
+    val body = """{
+                 |  "value": {
+                 |    "payload" : "bar"
+                 |  }
+                 |}""".stripMargin.parseJson.asJsObject
+    val result = store.invokeFunction(AzureFunctionAction("secondfunctionapp99", DocRevision.empty), body).futureValue
+    println(result)
   }
 }

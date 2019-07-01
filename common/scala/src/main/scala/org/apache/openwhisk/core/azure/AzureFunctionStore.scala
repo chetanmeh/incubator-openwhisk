@@ -18,24 +18,30 @@
 package org.apache.openwhisk.core.azure
 
 import java.net.InetSocketAddress
+import java.time.Instant
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.{ClientTransport, Http}
-import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model.StatusCodes.OK
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.settings.{ClientConnectionSettings, ConnectionPoolSettings}
 import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.http.scaladsl.{ClientTransport, Http}
 import akka.stream.ActorMaterializer
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.openwhisk.common.{Logging, TransactionId}
 import org.apache.openwhisk.core.ConfigKeys
-import org.apache.openwhisk.core.containerpool.RunResult
+import org.apache.openwhisk.core.containerpool.{Interval, RunResult}
+import org.apache.openwhisk.core.entity.ActivationResponse.{ConnectionError, ContainerResponse}
 import org.apache.openwhisk.core.entity.{DocRevision, FullyQualifiedEntityName}
 import pureconfig.loadConfigOrThrow
-import spray.json.{JsObject, JsValue, RootJsonReader}
+import spray.json.DefaultJsonProtocol._
+import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 object AzureFunctionStoreProvider {
   def makeStore(config: Config = ConfigFactory.defaultApplication())(implicit system: ActorSystem,
@@ -49,7 +55,7 @@ object AzureFunctionStoreProvider {
 
 case class AzureConfig(subscriptionId: String, resourceGroup: String, tenantId: String, credentials: AzureCredentials)
 case class AzureCredentials(clientId: String, clientSecret: String)
-case class AzureFunctionConfig()
+case class AzureFunctionConfig(httpTriggerName: String, authKey: String)
 
 case class AzureFunctionAction(name: String, whiskRevision: DocRevision)
 
@@ -65,8 +71,25 @@ class AzureFunctionStore(funcConfig: AzureFunctionConfig, azureConfig: AzureConf
     ???
   }
 
-  def invokeFunction(action: AzureFunctionAction, body: JsObject)(implicit transid: TransactionId): Future[RunResult] =
-    ???
+  def invokeFunction(action: AzureFunctionAction, body: JsObject)(
+    implicit transid: TransactionId): Future[RunResult] = {
+    val started = Instant.now()
+    //TODO Switch to logic as per in AkkaContainerClient and avoid cost in unmarshalling to json
+    runFunction(action.name, body)
+      .map {
+        case Right(js) =>
+          Right(ContainerResponse(OK.intValue, js.compactPrint, None))
+        case Left(status) =>
+          Right(ContainerResponse(status.intValue, status.reason(), None))
+      }
+      .recover {
+        case NonFatal(t) => Left(ConnectionError(t))
+      }
+      .map { response =>
+        val finished = Instant.now()
+        RunResult(Interval(started, finished), response)
+      }
+  }
 
   def fetchBearerToken(): Future[Either[StatusCode, BearerToken]] = {
     requestJson[BearerToken](
@@ -78,6 +101,15 @@ class AzureFunctionStore(funcConfig: AzureFunctionConfig, azureConfig: AzureConf
           "client_id" -> azureConfig.credentials.clientId,
           "resource" -> "https://management.core.windows.net/",
           "client_secret" -> azureConfig.credentials.clientSecret)))
+  }
+
+  def runFunction(funcName: String, body: JsObject): Future[Either[StatusCode, JsObject]] = {
+    requestJson[JsObject](
+      mkJsonRequest(
+        HttpMethods.POST,
+        Uri(s"https://$funcName.azurewebsites.net/api/${funcConfig.httpTriggerName}"),
+        body,
+        List(RawHeader("x-functions-key", funcConfig.authKey))))
   }
 
   /**
