@@ -36,7 +36,7 @@ class AzureFunctionContainerFactory(
   private val secondaryFactory = loadSecondaryFactory()
   private val azureFuncStore = AzureFunctionStoreProvider.makeStore()
 
-  logging.info(this, "Initializing LambdaContainerFactory")
+  logging.info(this, "Initializing AzureContainerFactory")
 
   override def createContainer(
     tid: TransactionId,
@@ -59,14 +59,14 @@ class AzureFunctionContainerFactory(
           case Some(l) =>
             logging.info(
               this,
-              s"Lambda whisk revision $l did not matched expected revision ${actionInfo(action)}. Delegating to secondary factory")
+              s"Azure function whisk revision $l did not matched expected revision ${actionInfo(action)}. Delegating to secondary factory")
             createSecondary()
           case _ =>
             logging
-              .info(this, s"No matching Lambda function found for ${actionInfo(action)}")
+              .info(this, s"No matching azure function found for ${actionInfo(action)}")
             createSecondary()
         }
-        f.failed.foreach(t => logging.warn(this, s"Error occurred while invoking Lambda API $t"))
+        f.failed.foreach(t => logging.warn(this, s"Error occurred while invoking Azure Function API $t"))
         f
       }
       .getOrElse(createSecondary())
