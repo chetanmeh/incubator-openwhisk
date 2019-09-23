@@ -42,7 +42,7 @@ class CosmosDBConfigTests extends FlatSpec with Matchers {
     //Cosmos SDK does not have equals defined so match them explicitly
     val policy = cosmos.connectionPolicy.asJava
     val defaultPolicy = JConnectionPolicy.GetDefault()
-    policy.getConnectionMode shouldBe defaultPolicy.getConnectionMode
+    policy.getConnectionMode shouldBe ConnectionMode.Direct
     policy.getEnableEndpointDiscovery shouldBe defaultPolicy.getEnableEndpointDiscovery
     policy.getIdleConnectionTimeoutInMillis shouldBe defaultPolicy.getIdleConnectionTimeoutInMillis
     policy.getMaxPoolSize shouldBe defaultPolicy.getMaxPoolSize
@@ -90,7 +90,7 @@ class CosmosDBConfigTests extends FlatSpec with Matchers {
     cosmos.connectionPolicy.maxPoolSize shouldBe 42
     val policy = cosmos.connectionPolicy.asJava
     val defaultPolicy = JConnectionPolicy.GetDefault()
-    policy.getConnectionMode shouldBe defaultPolicy.getConnectionMode
+    policy.getConnectionMode shouldBe ConnectionMode.Direct
     policy.getRetryOptions.getMaxRetryAttemptsOnThrottledRequests shouldBe defaultPolicy.getRetryOptions.getMaxRetryAttemptsOnThrottledRequests
     policy.getRetryOptions.getMaxRetryWaitTimeInSeconds shouldBe defaultPolicy.getRetryOptions.getMaxRetryWaitTimeInSeconds
   }
