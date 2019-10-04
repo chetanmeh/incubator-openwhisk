@@ -74,7 +74,7 @@ class PlaygroundLauncher(host: String, controllerPort: Int, pgPort: Int, authKey
       .mapAsync(1) { name =>
         val actionName = s"playground-$name"
         val js = resourceToString(s"playground-$name.js", "actions")
-        val r = wsk.updateAction(actionName, js)
+        val r = wsk.updatePgAction(actionName, js)
         r.foreach(_ => logging.info(this, s"Installed action $actionName"))
         r
       }

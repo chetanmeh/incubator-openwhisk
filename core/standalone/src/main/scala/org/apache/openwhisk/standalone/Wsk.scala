@@ -37,7 +37,7 @@ class Wsk(host: String, port: Int, authKey: String)(implicit system: ActorSystem
     List(Authorization(BasicHttpCredentials(username, password)), Accept(MediaTypes.`application/json`))
   }
 
-  def updateAction(name: String, content: String): Future[Done] = {
+  def updatePgAction(name: String, content: String): Future[Done] = {
     val js = actionJson(name, content)
     val params = Map("overwrite" -> "true")
     val uri = Uri(s"/api/v1/namespaces/_/actions/$name").withQuery(Query(params))
