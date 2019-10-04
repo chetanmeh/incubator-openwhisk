@@ -44,6 +44,7 @@ import scala.util.{Failure, Success, Try}
 import KafkaLauncher._
 
 class Conf(arguments: Seq[String]) extends ScallopConf(Conf.expandAllMode(arguments)) {
+  import StandaloneOpenWhisk.preferredPgPort
   banner(StandaloneOpenWhisk.banner)
   footer("\nOpenWhisk standalone server")
   StandaloneOpenWhisk.gitInfo.foreach(g => version(s"Git Commit - ${g.commitId}"))
@@ -100,6 +101,12 @@ class Conf(arguments: Seq[String]) extends ScallopConf(Conf.expandAllMode(argume
     noshort = true)
 
   val devKcf = opt[Boolean](descr = "Enables KubernetesContainerFactory for local development")
+
+  val pg = opt[Boolean](descr = "Playground UI to try out function execution", noshort = true)
+  val pgPort = opt[Int](
+    descr = s"Playground server port. If not specified then $preferredPgPort or some random free port " +
+      s"(if $StandaloneOpenWhisk is busy) would be used",
+    noshort = true)
 
   mainOptions = Seq(manifest, configFile, apiGw, couchdb, userEvents, kafka, kafkaUi)
 
@@ -184,6 +191,10 @@ object StandaloneOpenWhisk extends SLF4JLogging {
 
   val wskPath = System.getProperty("whisk.standalone.wsk", "wsk")
 
+  val preferredPgPort = 3232
+
+  private val systemUser = "whisk.system"
+
   def main(args: Array[String]): Unit = {
     val conf = new Conf(args)
 
@@ -200,14 +211,12 @@ object StandaloneOpenWhisk extends SLF4JLogging {
     implicit val logger: Logging = createLogging(actorSystem, conf)
     implicit val ec: ExecutionContext = actorSystem.dispatcher
 
+    val owPort = conf.port()
     val (dataDir, workDir) = initializeDirs(conf)
     val (dockerClient, dockerSupport) = prepareDocker(conf)
 
     val defaultSvcs = Seq(
-      ServiceContainer(
-        conf.port(),
-        s"http://${StandaloneDockerSupport.getLocalHostName()}:${conf.port()}",
-        "Controller"))
+      ServiceContainer(owPort, s"http://${StandaloneDockerSupport.getLocalHostName()}:$owPort", "Controller"))
 
     val (apiGwApiPort, apiGwSvcs) = if (conf.apiGw()) {
       startApiGateway(conf, dockerClient, dockerSupport)
@@ -222,7 +231,10 @@ object StandaloneOpenWhisk extends SLF4JLogging {
       if (conf.userEvents()) startUserEvents(conf.port(), kafkaDockerPort, workDir, dataDir, dockerClient)
       else Seq.empty
 
-    val svcs = Seq(defaultSvcs, apiGwSvcs, couchSvcs.toList, kafkaSvcs, userEventSvcs).flatten
+    val pgLauncher = if (conf.pg()) Some(createPgLauncher(owPort, conf)) else None
+    val pgSvc = pgLauncher.map(pg => Seq(pg.run())).getOrElse(Seq.empty)
+
+    val svcs = Seq(defaultSvcs, apiGwSvcs, couchSvcs.toList, kafkaSvcs, userEventSvcs, pgSvc).flatten
     new ServiceInfoLogger(conf, svcs, dataDir).run()
 
     startServer(conf)
@@ -231,6 +243,8 @@ object StandaloneOpenWhisk extends SLF4JLogging {
     if (conf.apiGw()) {
       installRouteMgmt(conf, workDir, apiGwApiPort)
     }
+
+    pgLauncher.foreach(_.install())
   }
 
   def initialize(conf: Conf): Unit = {
@@ -418,12 +432,9 @@ object StandaloneOpenWhisk extends SLF4JLogging {
   }
 
   private def installRouteMgmt(conf: Conf, workDir: File, apiGwApiPort: Int)(implicit logging: Logging): Unit = {
-    val user = "whisk.system"
     val apiGwHostv2 = s"http://${StandaloneDockerSupport.getLocalHostIp()}:$apiGwApiPort/v2"
-    val authKey = getUsers().getOrElse(
-      user,
-      throw new Exception(s"Did not found auth key for $user which is needed to install the api management package"))
-    val installer = InstallRouteMgmt(workDir, authKey, conf.serverUrl, "/" + user, Uri(apiGwHostv2), wskPath)
+    val authKey = systemAuthKey
+    val installer = InstallRouteMgmt(workDir, authKey, conf.serverUrl, "/" + systemUser, Uri(apiGwHostv2), wskPath)
     installer.run()
   }
 
@@ -529,5 +540,17 @@ object StandaloneOpenWhisk extends SLF4JLogging {
 
   private def configureDevMode(): Unit = {
     setSysProp("whisk.docker.standalone.container-factory.pull-standard-images", "false")
+  }
+
+  private def createPgLauncher(
+    owPort: Int,
+    conf: Conf)(implicit logging: Logging, as: ActorSystem, ec: ExecutionContext, materializer: ActorMaterializer) = {
+    implicit val tid: TransactionId = TransactionId(systemPrefix + "playground")
+    val pgPort = getPort(conf.pgPort.toOption, preferredPgPort)
+    new PlaygroundLauncher(StandaloneDockerSupport.getLocalHostName(), owPort, pgPort, systemAuthKey)
+  }
+
+  private def systemAuthKey: String = {
+    getUsers().getOrElse(systemUser, throw new Exception(s"Did not found auth key for $systemUser"))
   }
 }

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 $(document).ready(function(){
-  window.APIHOST='http://localhost:3233' // FIXME
+  window.APIHOST='http://localhost:3233' // This gets replaced in PlaygroundLauncher
   window.PLAYGROUND='whisk.system'       // FIXME
   // Keys for cookies
   window.colorKey = 'colorId'
