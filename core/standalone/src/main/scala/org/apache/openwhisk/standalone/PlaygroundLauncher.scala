@@ -24,12 +24,14 @@ import akka.http.scaladsl.model.{ContentType, HttpCharsets, HttpEntity, MediaTyp
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileAndResourceDirectives.ResourceFile
 import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.{Sink, Source}
 import org.apache.commons.io.IOUtils
 import org.apache.openwhisk.common.{Logging, TransactionId}
 import org.apache.openwhisk.http.BasicHttpService
 import pureconfig.loadConfigOrThrow
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
 class PlaygroundLauncher(host: String, controllerPort: Int, pgPort: Int, authKey: String)(
@@ -55,12 +57,26 @@ class PlaygroundLauncher(host: String, controllerPort: Int, pgPort: Int, authKey
     content.getBytes(UTF_8)
   }
 
+  private val wsk = new Wsk(host, 3334, authKey)
+
   def run(): ServiceContainer = {
     BasicHttpService.startHttpService(PlaygroundService.route, pgPort, None, interface)(actorSystem, materializer)
-    ServiceContainer(pgPort, s"http://${StandaloneDockerSupport.getLocalHostName()}:$pgPort", "Playground")
+    ServiceContainer(pgPort, s"http://${StandaloneDockerSupport.getLocalHostName()}:$pgPort/pg", "Playground")
   }
 
-  def install(): Unit = {}
+  def install(): Unit = {
+    val actions = List("delete", "fetch", "run", "userpackage")
+    val f = Source(actions)
+      .mapAsync(1) { name =>
+        val actionName = s"playground-$name"
+        val js = resourceToString(s"playground-$name.js", "actions")
+        val r = wsk.updateAction(actionName, js)
+        r.foreach(_ => logging.info(this, s"Installed action $actionName"))
+        r
+      }
+      .runWith(Sink.ignore)
+    Await.result(f, 5.minutes)
+  }
 
   object PlaygroundService extends BasicHttpService {
     override def routes(implicit transid: TransactionId): Route =
