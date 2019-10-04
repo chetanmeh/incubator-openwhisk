@@ -26,13 +26,15 @@ import akka.http.scaladsl.server.directives.FileAndResourceDirectives.ResourceFi
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Sink, Source}
 import org.apache.commons.io.IOUtils
+import org.apache.commons.lang3.SystemUtils
 import org.apache.openwhisk.common.{Logging, TransactionId}
 import org.apache.openwhisk.http.BasicHttpService
 import pureconfig.loadConfigOrThrow
 
-import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext}
 import scala.util.{Failure, Success, Try}
+import scala.sys.process._
 
 class PlaygroundLauncher(host: String, controllerPort: Int, pgPort: Int, authKey: String)(
   implicit logging: Logging,
@@ -57,11 +59,13 @@ class PlaygroundLauncher(host: String, controllerPort: Int, pgPort: Int, authKey
     content.getBytes(UTF_8)
   }
 
-  private val wsk = new Wsk(host, 3334, authKey)
+  private val pgUrl = s"http://${StandaloneDockerSupport.getLocalHostName()}:$pgPort/pg"
+
+  private val wsk = new Wsk(host, controllerPort, authKey)
 
   def run(): ServiceContainer = {
     BasicHttpService.startHttpService(PlaygroundService.route, pgPort, None, interface)(actorSystem, materializer)
-    ServiceContainer(pgPort, s"http://${StandaloneDockerSupport.getLocalHostName()}:$pgPort/pg", "Playground")
+    ServiceContainer(pgPort, pgUrl, "Playground")
   }
 
   def install(): Unit = {
@@ -76,6 +80,17 @@ class PlaygroundLauncher(host: String, controllerPort: Int, pgPort: Int, authKey
       }
       .runWith(Sink.ignore)
     Await.result(f, 5.minutes)
+    Try(launchBrowser(pgUrl)).failed.foreach(t => logging.warn(this, "Failed to launch browser " + t))
+  }
+
+  private def launchBrowser(url: String): Unit = {
+    if (SystemUtils.IS_OS_MAC) {
+      s"open $url".!!
+    } else if (SystemUtils.IS_OS_WINDOWS) {
+      s"""start "$url" """.!!
+    } else if (SystemUtils.IS_OS_LINUX) {
+      s"xdg-open $url".!!
+    }
   }
 
   object PlaygroundService extends BasicHttpService {
