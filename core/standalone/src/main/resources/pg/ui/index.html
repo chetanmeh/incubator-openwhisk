@@ -33,13 +33,13 @@ $(document).ready(function() {
 <script src="playgroundFunctions.js"></script>
 <!--End Inlining-->
 
-<!-- Nimbella and Function Playground icons (svgomg was used to compact) -->
+<!-- OpenWhisk and Function Playground icons (svgomg was used to compact) -->
 <svg aria-hidden="true" focusable="false" style="display:none" xmlns="http://www.w3.org/2000/svg">
   <symbol id="svg-logo-icon" viewBox="0 0 32 32">
     <path d="M15.266 26.754c3.052-.87 8.055-6.084 6.95-8.49 5.172-1.673 10.052-9.333 9.666-10.43C30.53 4.03 20.438 12.901 16.79 17.26c-.748 1.343-3.307 5.55-3.307 5.55l2.613-5.982S5.572 3.347 1.058 8.396c-3.422 3.829 3.298 8.544 4.567 9.078-1.1.937-4.415 8.627 3.447 9.218 1.779.136 3.643-1.204 3.643-1.204s-.5 2.136 2.551 1.266z" fill="#52bfd2"/>
   </symbol>
   <symbol id="svg-logo-text" viewBox="0 0 195 32">
-    <text x="0.259234" y="29.829633" fill="#808080" font-family="Helvetica, Arial, sans-serif" font-size="10.667px" font-weight="bold" stroke="#000000" stroke-width="0" xml:space="preserve">Nimbella Serverless</text>
+    <text x="0.259234" y="29.829633" fill="#808080" font-family="Helvetica, Arial, sans-serif" font-size="10.667px" font-weight="bold" stroke="#000000" stroke-width="0" xml:space="preserve">OpenWhisk Serverless</text>
     <text transform="matrix(.89868 0 0 1 -.044817 0)" x="-0.480163" y="16.794799" fill="#cccccc" font-family="Helvetica, Arial, sans-serif" font-size="18.667px" font-weight="bold" stroke-width="1px" xml:space="preserve">
      <tspan x="-0.480163" y="16.794799" fill="#cccccc" font-family="Helvetica, Arial, sans-serif" font-size="18.667px" font-weight="bold">Function Playground</tspan>
     </text>
@@ -58,12 +58,12 @@ $(document).ready(function() {
        <button id="run" class="nav-button" type="button" onclick="runClicked()">
          <i style="font-size:12pt !important;" class="material-icons icon-size">play_arrow</i>Run
        </button>
-    </div> 
+    </div>
     <div class="nav-item">
        <button id="publish" class="nav-button nav-right-spacer" type="button" onclick="publishClicked()">
          <i class="material-icons icon-size icon-extra-margin">cloud_upload</i>Publish
        </button>
-    </div>       
+    </div>
     <div class="nav-item">
       <select id="languageSelector" class="nav-select" onchange="languageChanged()">
         <option value="JavaScript" selected="selected">JavaScript</option>
@@ -71,7 +71,7 @@ $(document).ready(function() {
       </select>
     </div>
     <div class="nav-item">
-      <select id="actionSelector" class="nav-select" onchange="actionChanged()" select=""> 
+      <select id="actionSelector" class="nav-select" onchange="actionChanged()" select="">
         <option value="sampleJavaScript" selected="selected">sampleJavaScript</option>
         <option value="--New Action--">--New Action--</option>
         <option value="--Rename--">--Rename--</option>
@@ -99,7 +99,7 @@ $(document).ready(function() {
         <i class="material-icons icon-size icon-extra-margin">input</i>INPUT PARAMETERS
       </div>
       <div class="panel-right-top">
-        <textarea id="input" spellcheck="false" class="panel-right-input">{ "name" : "nimbella" }</textarea>
+        <textarea id="input" spellcheck="false" class="panel-right-input">{ "name" : "openwhisk" }</textarea>
       </div>
       <div class="panel-header">
         <i class="material-icons icon-size icon-extra-margin">access_time</i>EXECUTION TIME
