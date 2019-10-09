@@ -98,7 +98,7 @@ class PlaygroundLauncher(host: String, controllerPort: Int, pgPort: Int, authKey
 
   object PlaygroundService extends BasicHttpService {
     override def routes(implicit transid: TransactionId): Route =
-      path(PathEnd | Slash | pg) { redirect(s"/$pg/ui/playground.html", StatusCodes.Found) } ~
+      path(PathEnd | Slash | pg) { redirect(s"/$pg/ui/index.html", StatusCodes.Found) } ~
         pathPrefix(pg / "ui" / Segment) { fileName =>
           get {
             if (fileName == jsFileName) {
