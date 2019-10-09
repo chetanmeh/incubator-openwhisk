@@ -26,7 +26,7 @@ var openwhisk = require('openwhisk');
 //    playgroundId -- the identity of the browser instance submitting the code (functions as a kind of user id but not enduring
 //          or authenticated).  Becomes part of the name of the action.
 //    action -- the name of the action as assigned by the user or one of the default sample names; combines with playgroundId to form
-//          the action name as viewed by Nimbella
+//          the action name as viewed by OpenWhisk
 //    runtime -- the whisk runtime ('kind') value to use in running or saving the action.
 function main(outerParam) {
     let t0 = new Date().getTime()

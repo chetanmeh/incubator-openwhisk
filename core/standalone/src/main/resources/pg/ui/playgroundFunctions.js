@@ -142,7 +142,7 @@ function initializePlaygroundId() {
 // with no actions.  Returns a promise.  Initialization code dependent on the action list should be in the promise chain.
 function initializeUserPackage() {
 	console.log("Initializing user", window.playgroundId)
-	return makeNimbellaRequest('playground-userpackage.json', { playgroundId: window.playgroundId }).then(result => {
+	return makeOpenWhiskRequest('playground-userpackage.json', { playgroundId: window.playgroundId }).then(result => {
 		console.log("userpackage raw response:", result)
 		let userPackage = JSON.parse(result)
 		if (userPackage && userPackage.actions && Array.isArray(userPackage.actions)) {
@@ -419,7 +419,7 @@ function deleteAction() {
 // Delete the remote copy of an action if present.  If absent, no error is indicated except on the console.  Local processing
 // proceeds in either case.
 function deleteRemote(actionName) {
-	return makeNimbellaRequest('playground-delete.json', { playgroundId: window.playgroundId, actionName: actionName }).then(result => {
+	return makeOpenWhiskRequest('playground-delete.json', { playgroundId: window.playgroundId, actionName: actionName }).then(result => {
 		console.log("deleted", actionName)
 		console.log("full result", result)
 	}).catch(err => {
@@ -431,7 +431,7 @@ function deleteRemote(actionName) {
 // Fetch code from a deployed action.   Returns a promise, for chaining purposes, but both the resolve and the reject path simply provide the
 // action name.  Code, if retrieved, is placed directly in the editor.  Failure to retrieve code is tolerated as a sometimes-expected condition.
 function getCode(actionName) {
-	return makeNimbellaRequest('playground-fetch.json', { playgroundId: window.playgroundId, actionName: actionName }).then(result => {
+	return makeOpenWhiskRequest('playground-fetch.json', { playgroundId: window.playgroundId, actionName: actionName }).then(result => {
    		let response = JSON.parse(result)
    		console.log("getCode response", response)
    		if ('exec' in response) {
@@ -610,7 +610,7 @@ function codeChanged(delta) {
 }
 
 // Open a request session to nimbella
-function makeNimbellaRequest(actionName, args) {
+function makeOpenWhiskRequest(actionName, args) {
 	return new Promise(function (resolve, reject) {
 	    const xhr = new XMLHttpRequest()
 	    const url = window.APIHOST + '/api/v1/web/' + window.PLAYGROUND + '/default/' + actionName
@@ -651,7 +651,7 @@ function save(web) {
     } else {
     	arg['saveOnly'] = true
     }
-    return makeNimbellaRequest('playground-run.json', arg).then(result => {
+    return makeOpenWhiskRequest('playground-run.json', arg).then(result => {
 		window.editorContentsChanged = false  // regardless of error.  We don't want to keep trying if it isn't going to work.
 		elem("run").disabled = false  // Save is over, run is ok
 		let response = JSON.parse(result)
@@ -758,7 +758,7 @@ function runClicked() {
     let inputStr = elem("input").value
     let params = JSON.parse(inputStr)
     let arg = { code : contents, params: params, playgroundId: window.playgroundId, actionName: window.currentAction, runtime: window.language.kind }
-    return makeNimbellaRequest('playground-run.json', arg).then(result => {
+    return makeOpenWhiskRequest('playground-run.json', arg).then(result => {
 		let elapsed = new Date().getTime() - t0
 		let response = JSON.parse(result)
 		if ("error" in response) {
