@@ -45,7 +45,9 @@ class PlaygroundLauncher(host: String, controllerPort: Int, pgPort: Int, authKey
   private val interface = loadConfigOrThrow[String]("whisk.controller.interface")
   private val jsFileName = "playgroundFunctions.js"
   private val jsContentType = ContentType(MediaTypes.`application/javascript`, HttpCharsets.`UTF-8`)
+
   private val uiPath = {
+    //Depending on fact the run is done from within IDE or from terminal the classpath prefix needs to be adapted
     val res = getClass.getResource(s"/pg/ui/$jsFileName")
     Try(ResourceFile(res)) match {
       case Success(_) => "pg/ui"
@@ -59,7 +61,8 @@ class PlaygroundLauncher(host: String, controllerPort: Int, pgPort: Int, authKey
     content.getBytes(UTF_8)
   }
 
-  private val pgUrl = s"http://${StandaloneDockerSupport.getLocalHostName()}:$pgPort/pg"
+  private val pg = "playground"
+  private val pgUrl = s"http://${StandaloneDockerSupport.getLocalHostName()}:$pgPort/$pg"
 
   private val wsk = new Wsk(host, controllerPort, authKey)
 
@@ -95,8 +98,8 @@ class PlaygroundLauncher(host: String, controllerPort: Int, pgPort: Int, authKey
 
   object PlaygroundService extends BasicHttpService {
     override def routes(implicit transid: TransactionId): Route =
-      path("pg") { redirect(s"/pg/ui/playground.html", StatusCodes.Found) } ~
-        pathPrefix("pg" / "ui" / Segment) { fileName =>
+      path(PathEnd | Slash | pg) { redirect(s"/$pg/ui/playground.html", StatusCodes.Found) } ~
+        pathPrefix(pg / "ui" / Segment) { fileName =>
           get {
             if (fileName == jsFileName) {
               complete(HttpEntity(jsContentType, jsFileContent))
