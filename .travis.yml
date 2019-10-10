@@ -58,8 +58,8 @@ cache:
 
 before_install:
   - ./tools/travis/docker.sh
-  - pip install pip setuptools six
-  - pip3 install pip setuptools six
+  - pip install setuptools six
+  - pip3 install setuptools six
 
 install:
   - ./tools/travis/setup.sh
