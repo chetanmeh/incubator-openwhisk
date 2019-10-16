@@ -26,8 +26,12 @@ executed as a normal java application from command line.
 java -jar openwhisk-standalone.jar
 ```
 
-This should start the OpenWhisk server on port 3233 by default. Once the server is started then [configure the cli][1]
-and then try out the [samples][2].
+This should start the OpenWhisk server on port 3233 by default and launch a Playground UI at port 3232.
+
+![Playground UI](../../docs/images/playground-ui.png)
+
+The Playground UI can be used to try out simple actions. To make use of all OpenWhisk features [configure the cli][1] and
+then try out the [samples][2].
 
 This server by default uses a memory based store and does not depend on any other external service like Kafka and CouchDB.
 It only needs Docker and Java to for running.
@@ -237,10 +241,10 @@ whisk {
 }
 ```
 
-Then pass this config file via `-c` option. 
+Then pass this config file via `-c` option.
 
-Note that when using external DB Standalone OpenWhisk would not bootstrap 
-users and actions (like those from Api Gateway and Playground UI) by default so as to ensure that default users do not get 
+Note that when using external DB Standalone OpenWhisk would not bootstrap
+users and actions (like those from Api Gateway and Playground UI) by default so as to ensure that default users do not get
 added to your artifact stores. To enable bootstrap of default users pass the `--enable-bootstrap` flag
 
 #### Using Api Gateway
