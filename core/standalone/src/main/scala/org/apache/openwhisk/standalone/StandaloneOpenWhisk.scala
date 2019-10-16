@@ -102,7 +102,7 @@ class Conf(arguments: Seq[String]) extends ScallopConf(Conf.expandAllMode(argume
 
   val devKcf = opt[Boolean](descr = "Enables KubernetesContainerFactory for local development")
 
-  val pg = opt[Boolean](descr = "Playground UI to try out function execution", noshort = true)
+  val noPg = opt[Boolean](descr = "Disable Playground UI", noshort = true)
   val pgPort = opt[Int](
     descr = s"Playground server port. If not specified then $preferredPgPort or some random free port " +
       s"(if $StandaloneOpenWhisk is busy) would be used",
@@ -236,7 +236,7 @@ object StandaloneOpenWhisk extends SLF4JLogging {
         startUserEvents(conf.port(), kafkaDockerPort, conf.devUserEventsPort.toOption, workDir, dataDir, dockerClient)
       else Seq.empty
 
-    val pgLauncher = if (conf.pg()) Some(createPgLauncher(owPort, conf)) else None
+    val pgLauncher = if (conf.noPg()) None else Some(createPgLauncher(owPort, conf))
     val pgSvc = pgLauncher.map(pg => Seq(pg.run())).getOrElse(Seq.empty)
 
     val svcs = Seq(defaultSvcs, apiGwSvcs, couchSvcs.toList, kafkaSvcs, userEventSvcs, pgSvc).flatten
@@ -248,7 +248,6 @@ object StandaloneOpenWhisk extends SLF4JLogging {
     if (conf.apiGw()) {
       installRouteMgmt(conf, workDir, apiGwApiPort)
     }
-
     pgLauncher.foreach(_.install())
   }
 
