@@ -237,7 +237,11 @@ whisk {
 }
 ```
 
-Then pass this config file via `-c` option.
+Then pass this config file via `-c` option. 
+
+Note that when using external DB Standalone OpenWhisk would not bootstrap 
+users and actions (like those from Api Gateway and Playground UI) by default so as to ensure that default users do not get 
+added to your artifact stores. To enable bootstrap of default users pass the `--enable-bootstrap` flag
 
 #### Using Api Gateway
 
