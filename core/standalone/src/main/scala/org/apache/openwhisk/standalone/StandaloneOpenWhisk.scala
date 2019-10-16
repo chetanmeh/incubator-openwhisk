@@ -112,6 +112,13 @@ class Conf(arguments: Seq[String]) extends ScallopConf(Conf.expandAllMode(argume
     descr = "Specify the port for the user-event service. This mode can be used for local " +
       "development of user-event service by configuring Prometheus to connect to existing running service instance")
 
+  val enableBootstrap = opt[Boolean](
+    descr =
+      "Enable bootstrap of default users and actions like those needed for Api Gateway or Playground UI. " +
+        "By default bootstrap is done by default when using Memory store or default CouchDB support. " +
+        "When using other stores enable this flag to get bootstrap done",
+    noshort = true)
+
   mainOptions = Seq(manifest, configFile, apiGw, couchdb, userEvents, kafka, kafkaUi)
 
   verify()
@@ -245,10 +252,12 @@ object StandaloneOpenWhisk extends SLF4JLogging {
     startServer(conf)
     new ServerStartupCheck(conf.serverUrl, "OpenWhisk").waitForServerToStart()
 
-    if (conf.apiGw()) {
-      installRouteMgmt(conf, workDir, apiGwApiPort)
+    if (canInstallUserAndActions(conf)) {
+      if (conf.apiGw()) {
+        installRouteMgmt(conf, workDir, apiGwApiPort)
+      }
+      pgLauncher.foreach(_.install())
     }
-    pgLauncher.foreach(_.install())
   }
 
   def initialize(conf: Conf): Unit = {
@@ -266,7 +275,9 @@ object StandaloneOpenWhisk extends SLF4JLogging {
 
   def startServer(
     conf: Conf)(implicit actorSystem: ActorSystem, materializer: ActorMaterializer, logging: Logging): Unit = {
-    bootstrapUsers()
+    if (canInstallUserAndActions(conf)) {
+      bootstrapUsers()
+    }
     startController()
   }
 
@@ -557,5 +568,22 @@ object StandaloneOpenWhisk extends SLF4JLogging {
 
   private def systemAuthKey: String = {
     getUsers().getOrElse(systemUser, throw new Exception(s"Did not found auth key for $systemUser"))
+  }
+
+  private def canInstallUserAndActions(conf: Conf)(implicit logging: Logging, actorSystem: ActorSystem): Boolean = {
+    val config = actorSystem.settings.config
+    val artifactStore = config.getString("whisk.spi.ArtifactStoreProvider")
+    if (conf.couchdb() || artifactStore == "org.apache.openwhisk.core.database.memory.MemoryArtifactStoreProvider") {
+      true
+    } else if (conf.enableBootstrap()) {
+      logging.info(this, "Bootstrap is enabled for external ArtifactStore")
+      true
+    } else {
+      logging.info(
+        this,
+        s"Bootstrap is not enabled as connecting to external ArtifactStore. " +
+          s"Start with ${conf.enableBootstrap.name} to bootstrap default users and action")
+      false
+    }
   }
 }
