@@ -781,7 +781,13 @@ function runClicked() {
       let deploy = response['deployTime']
       let exec = response['runTime']
       let network = elapsed - (deploy + exec)
-      setAreaContents("resultText", JSON.stringify(result, null, 4), false)
+
+      if (result.body && result.headers && result.headers['content-type'] == 'image/jpeg') {
+        setAreaContents("resultText", '<img src="data:image/png;base64, ' + result.body + '">', false)
+      } else {
+        setAreaContents("resultText", JSON.stringify(result, null, 4), false)
+      }
+
       let timingStr = "Network: " + network + " ms<br>Deploy: " + deploy + " ms<br>Exec: " + exec + " ms"
       setAreaContents("timingText", timingStr, false)
     }
