@@ -72,7 +72,7 @@ trait StandaloneServerFixture extends TestSuite with BeforeAndAfterAll with Stre
         System.setProperty(WHISK_SERVER, serverUrl)
         super.beforeAll()
         println(s"Running standalone server from ${standaloneServerJar.getAbsolutePath}")
-        val pgArgs = if (disablePlayGround) Seq("--no-pg") else Seq.empty
+        val pgArgs = if (disablePlayGround) Seq("--no-ui") else Seq.empty
         val args = Seq(
           Seq(
             "java",

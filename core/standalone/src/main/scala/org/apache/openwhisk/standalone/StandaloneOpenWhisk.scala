@@ -102,9 +102,9 @@ class Conf(arguments: Seq[String]) extends ScallopConf(Conf.expandAllMode(argume
 
   val devKcf = opt[Boolean](descr = "Enables KubernetesContainerFactory for local development")
 
-  val noPg = opt[Boolean](descr = "Disable Playground UI", noshort = true)
-  val pgPort = opt[Int](
-    descr = s"Playground server port. If not specified then $preferredPgPort or some random free port " +
+  val noUi = opt[Boolean](descr = "Disable Playground UI", noshort = true)
+  val uiPort = opt[Int](
+    descr = s"Playground UI server port. If not specified then $preferredPgPort or some random free port " +
       s"(if $StandaloneOpenWhisk is busy) would be used",
     noshort = true)
 
@@ -243,7 +243,7 @@ object StandaloneOpenWhisk extends SLF4JLogging {
         startUserEvents(conf.port(), kafkaDockerPort, conf.devUserEventsPort.toOption, workDir, dataDir, dockerClient)
       else Seq.empty
 
-    val pgLauncher = if (conf.noPg()) None else Some(createPgLauncher(owPort, conf))
+    val pgLauncher = if (conf.noUi()) None else Some(createPgLauncher(owPort, conf))
     val pgSvc = pgLauncher.map(pg => Seq(pg.run())).getOrElse(Seq.empty)
 
     val svcs = Seq(defaultSvcs, apiGwSvcs, couchSvcs.toList, kafkaSvcs, userEventSvcs, pgSvc).flatten
@@ -562,7 +562,7 @@ object StandaloneOpenWhisk extends SLF4JLogging {
     owPort: Int,
     conf: Conf)(implicit logging: Logging, as: ActorSystem, ec: ExecutionContext, materializer: ActorMaterializer) = {
     implicit val tid: TransactionId = TransactionId(systemPrefix + "playground")
-    val pgPort = getPort(conf.pgPort.toOption, preferredPgPort)
+    val pgPort = getPort(conf.uiPort.toOption, preferredPgPort)
     new PlaygroundLauncher(StandaloneDockerSupport.getLocalHostName(), owPort, pgPort, systemAuthKey)
   }
 

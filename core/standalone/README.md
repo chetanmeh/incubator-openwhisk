@@ -121,8 +121,8 @@ $ java -jar openwhisk-standalone.jar -h
       --kafka-port  <arg>             Kafka port. If not specified then 9092 or
                                       some random free port (if 9092 is busy)
                                       would be used
-      --no-pg                         Disable Playground UI
-      --pg-port  <arg>                Playground server port. If not specified
+      --no-ui                         Disable Playground UI
+      --ui-port  <arg>                Playground UI server port. If not specified
                                       then 3232 or some random free port (if
                                       org.apache.openwhisk.standalone.StandaloneOpenWhisk$@75a1cd57
                                       is busy) would be used
