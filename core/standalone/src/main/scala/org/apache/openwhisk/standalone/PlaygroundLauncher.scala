@@ -37,7 +37,7 @@ import scala.concurrent.{Await, ExecutionContext}
 import scala.util.{Failure, Success, Try}
 import scala.sys.process._
 
-class PlaygroundLauncher(host: String, controllerPort: Int, pgPort: Int, authKey: String)(
+class PlaygroundLauncher(host: String, controllerPort: Int, pgPort: Int, authKey: String, devMode: Boolean)(
   implicit logging: Logging,
   ec: ExecutionContext,
   actorSystem: ActorSystem,
@@ -85,7 +85,9 @@ class PlaygroundLauncher(host: String, controllerPort: Int, pgPort: Int, authKey
       .runWith(Sink.ignore)
     Await.result(f, 5.minutes)
     Try {
-      prePullDefaultImages()
+      if (!devMode) {
+        prePullDefaultImages()
+      }
       launchBrowser(pgUrl)
     }.failed.foreach(t => logging.warn(this, "Failed to launch browser " + t))
   }

@@ -563,7 +563,7 @@ object StandaloneOpenWhisk extends SLF4JLogging {
     conf: Conf)(implicit logging: Logging, as: ActorSystem, ec: ExecutionContext, materializer: ActorMaterializer) = {
     implicit val tid: TransactionId = TransactionId(systemPrefix + "playground")
     val pgPort = getPort(conf.uiPort.toOption, preferredPgPort)
-    new PlaygroundLauncher(StandaloneDockerSupport.getLocalHostName(), owPort, pgPort, systemAuthKey)
+    new PlaygroundLauncher(StandaloneDockerSupport.getLocalHostName(), owPort, pgPort, systemAuthKey, conf.devMode())
   }
 
   private def systemAuthKey: String = {
