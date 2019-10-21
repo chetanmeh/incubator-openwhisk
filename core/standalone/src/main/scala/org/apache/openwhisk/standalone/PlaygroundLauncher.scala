@@ -28,6 +28,7 @@ import akka.stream.scaladsl.{Sink, Source}
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.SystemUtils
 import org.apache.openwhisk.common.{Logging, TransactionId}
+import org.apache.openwhisk.core.ExecManifestSupport
 import org.apache.openwhisk.http.BasicHttpService
 import pureconfig.loadConfigOrThrow
 
@@ -83,7 +84,10 @@ class PlaygroundLauncher(host: String, controllerPort: Int, pgPort: Int, authKey
       }
       .runWith(Sink.ignore)
     Await.result(f, 5.minutes)
-    Try(launchBrowser(pgUrl)).failed.foreach(t => logging.warn(this, "Failed to launch browser " + t))
+    Try {
+      prePullDefaultImages()
+      launchBrowser(pgUrl)
+    }.failed.foreach(t => logging.warn(this, "Failed to launch browser " + t))
   }
 
   private def launchBrowser(url: String): Unit = {
@@ -93,6 +97,12 @@ class PlaygroundLauncher(host: String, controllerPort: Int, pgPort: Int, authKey
       s"""start "$url" """.!!
     } else if (SystemUtils.IS_OS_LINUX) {
       s"xdg-open $url".!!
+    }
+  }
+
+  private def prePullDefaultImages(): Unit = {
+    ExecManifestSupport.getDefaultImage("nodejs").foreach { imageName =>
+      StandaloneDockerSupport.prePullImage(imageName)
     }
   }
 
