@@ -135,7 +135,7 @@ object StandaloneDockerSupport {
     //openwhisk/action-nodejs-v10   nightly             dbb0f8e1a050        5 days ago          967MB
     val imageResult = s"$dockerCmd images $imageName".!!
     val imageExist = imageResult.linesIterator.toList.size > 1
-    if (!imageExist) {
+    if (!imageExist || imageName.contains(":nightly")) {
       logging.info(this, s"Docker Pre pulling $imageName")
       s"$dockerCmd pull $imageName".!!
     }

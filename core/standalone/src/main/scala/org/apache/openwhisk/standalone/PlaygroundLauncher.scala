@@ -89,6 +89,7 @@ class PlaygroundLauncher(host: String, controllerPort: Int, pgPort: Int, authKey
         prePullDefaultImages()
       }
       launchBrowser(pgUrl)
+      logging.info(this, s"Launched browser $pgUrl")
     }.failed.foreach(t => logging.warn(this, "Failed to launch browser " + t))
   }
 
